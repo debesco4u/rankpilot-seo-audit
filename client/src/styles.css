@@ -1,6 +1,0 @@
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Inter', -apple-system, sans-serif; background: #f8fafc; color: #1f2937; }
-button { transition: opacity 0.2s, transform 0.1s; }
-button:hover { opacity: 0.9; }
-button:active { transform: scale(0.98); }
-input:focus { outline: none; border-color: #3b82f6 !important; }
