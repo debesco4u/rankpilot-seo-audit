@@ -1,14 +1,15 @@
 import { jsPDF } from 'jspdf';
 import { SiteAudit } from './analyzer';
 
-const C = {
-  primary: [30,58,138] as const, green: [34,197,94] as const,
-  yellow: [234,179,8] as const, red: [239,68,68] as const,
-  gray: [107,114,128] as const, dark: [31,41,55] as const,
-  light: [249,250,251] as const, white: [255,255,255] as const
+type RGB = readonly [number, number, number];
+const C: Record<string, RGB> = {
+  primary: [30,58,138], green: [34,197,94],
+  yellow: [234,179,8], red: [239,68,68],
+  gray: [107,114,128], dark: [31,41,55],
+  light: [249,250,251], white: [255,255,255]
 };
 
-function scoreColor(s: number) { return s >= 80 ? C.green : s >= 50 ? C.yellow : C.red; }
+function scoreColor(s: number): RGB { return s >= 80 ? C.green : s >= 50 ? C.yellow : C.red; }
 
 export function generatePdf(audit: SiteAudit, plan: string, removeBranding = false): Buffer {
   const doc = new jsPDF('portrait', 'mm', 'a4');
