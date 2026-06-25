@@ -1,8 +1,11 @@
 {
   "name": "rankpilot-seo-audit",
-  "version": "1.0.0",
   "private": true,
   "engines": {
     "node": "20.x"
+  },
+  "scripts": {
+    "build": "bash build.sh",
+    "start": "node server/dist/index.js"
   }
 }

@@ -1,59 +1,74 @@
-import { useState, useEffect } from 'react';
-import { api, setToken, clearToken } from './api';
-import { User } from './types';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Landing from './components/Landing';
 import Dashboard from './components/Dashboard';
-import AuthModal from './components/AuthModal';
 import AccountPage from './components/AccountPage';
+import AuthModal from './components/AuthModal';
+import PaymentModal from './components/PaymentModal';
+import Footer from './components/Footer';
+import type { User, Tier } from './types';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [page, setPage] = useState<'home' | 'dashboard' | 'account'>('home');
   const [showAuth, setShowAuth] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [loading, setLoading] = useState(true);
+  const [payTier, setPayTier] = useState<Tier | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem('rp_token');
     if (token) {
-      api.getMe().then(data => { setUser(data.user); setPage('dashboard'); })
-        .catch(() => clearToken()).finally(() => setLoading(false));
-    } else { setLoading(false); }
+      fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(u => setUser(u))
+        .catch(() => localStorage.removeItem('rp_token'));
+    }
   }, []);
 
-  const handleAuth = async (email: string, password: string, name?: string) => {
-    const data = authMode === 'register' ? await api.register(email, password, name || '') : await api.login(email, password);
-    setToken(data.token); setUser(data.user); setShowAuth(false); setPage('dashboard');
+  const handleAuth = (u: User, token: string) => {
+    setUser(u);
+    localStorage.setItem('rp_token', token);
   };
 
-  const handleLogout = () => { clearToken(); setUser(null); setPage('home'); };
-  const handlePlanChange = (newPlan: string, token: string) => {
-    setToken(token); setUser(prev => prev ? { ...prev, plan: newPlan as any } : null);
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('rp_token');
+    navigate('/');
   };
 
-  if (loading) return <div style={{display:'flex',justifyContent:'center',alignItems:'center',height:'100vh'}}>
-    <div style={{fontSize:'1.5rem',color:'#1e3a8a'}}>Loading...</div></div>;
+  const handleSelectTier = (tier: Tier) => {
+    if (!user) { setShowAuth(true); return; }
+    if (tier === 'free') return;
+    setPayTier(tier);
+  };
+
+  const handlePaymentSuccess = () => {
+    setPayTier(null);
+    // Refresh user
+    const token = localStorage.getItem('rp_token');
+    if (token) {
+      fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(u => setUser(u))
+        .catch(() => {});
+    }
+  };
+
+  const showBranding = user?.tier !== 'whitelabel';
 
   return (
-    <div style={{minHeight:'100vh',display:'flex',flexDirection:'column'}}>
-      <Navbar user={user} page={page} setPage={setPage}
-        onLogin={() => { setAuthMode('login'); setShowAuth(true); }}
-        onRegister={() => { setAuthMode('register'); setShowAuth(true); }}
-        onLogout={handleLogout} />
-      <main style={{flex:1}}>
-        {page === 'home' && <Landing onGetStarted={() => { if (user) setPage('dashboard'); else { setAuthMode('register'); setShowAuth(true); }}} />}
-        {page === 'dashboard' && <Dashboard user={user} />}
-        {page === 'account' && user && <AccountPage user={user} onPlanChange={handlePlanChange} />}
-      </main>
-      <footer style={{background:'#1e3a8a',color:'white',padding:'20px',textAlign:'center',fontSize:'0.85rem'}}>
-        <img src="/dabisoft-logo.png" alt="Dabisoft" style={{width:40,height:40,marginBottom:8,borderRadius:8}} />
-        <div>Powered by Dabisoft IT Solutions</div>
-        <div style={{opacity:0.7,marginTop:4}}>&copy; {new Date().getFullYear()} RankPilot SEO Audit</div>
-      </footer>
-      {showAuth && <AuthModal mode={authMode} onSubmit={handleAuth}
-        onToggleMode={() => setAuthMode(m => m === 'login' ? 'register' : 'login')}
-        onClose={() => setShowAuth(false)} />}
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'Inter, sans-serif' }}>
+      <Navbar user={user} onLoginClick={() => setShowAuth(true)} onLogout={handleLogout} />
+      <div style={{ flex: 1 }}>
+        <Routes>
+          <Route path="/" element={<Landing user={user} onLoginClick={() => setShowAuth(true)} onSelectTier={handleSelectTier} />} />
+          <Route path="/dashboard" element={user ? <Dashboard user={user} /> : <Landing user={user} onLoginClick={() => setShowAuth(true)} onSelectTier={handleSelectTier} />} />
+          <Route path="/account" element={user ? <AccountPage user={user} onSelectTier={handleSelectTier} /> : <Landing user={user} onLoginClick={() => setShowAuth(true)} onSelectTier={handleSelectTier} />} />
+        </Routes>
+      </div>
+      <Footer showBranding={showBranding} />
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} onAuth={handleAuth} />}
+      {payTier && <PaymentModal tier={payTier} onClose={() => setPayTier(null)} onSuccess={handlePaymentSuccess} />}
     </div>
   );
 }
