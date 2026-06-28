@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PricingCards from './PricingCards';
-import ScoreCircle from './ScoreCircle';
-import type { Tier, User } from '../types';
+import type { User, Tier } from '../types';
 
 interface Props {
   user: User | null;
@@ -10,121 +9,162 @@ interface Props {
   onSelectTier: (tier: Tier) => void;
 }
 
+const samplePages = [
+  { src: '/samples/sample_2.jpg', caption: 'Executive Summary' },
+  { src: '/samples/sample_4.jpg', caption: 'Page-by-Page Analysis' },
+  { src: '/samples/sample_6.jpg', caption: 'Issue Breakdown' },
+  { src: '/samples/sample_14.jpg', caption: 'Keyword Strategy' },
+  { src: '/samples/sample_16.jpg', caption: '90-Day Action Plan' },
+];
+
 export default function Landing({ user, onLoginClick, onSelectTier }: Props) {
   const navigate = useNavigate();
   const [url, setUrl] = useState('');
-  const [activeTab, setActiveTab] = useState(0);
+  const [previewIdx, setPreviewIdx] = useState(0);
 
-  const handleAudit = () => {
+  const handleGo = () => {
+    if (!url.trim()) return;
     if (!user) { onLoginClick(); return; }
-    navigate('/dashboard', { state: { url } });
+    navigate('/dashboard', { state: { url: url.trim() } });
   };
 
-  const tabs = ['Overview', 'Page Analysis', 'Keywords', 'Action Plan', 'PDF Report'];
-  const tabContent = [
-    { title: 'Overall Score & Summary', desc: 'Get a comprehensive SEO health score with color-coded categories showing exactly where your site stands.' },
-    { title: 'Page-by-Page Breakdown', desc: 'Every page audited individually with specific issues, fix recommendations, and priority levels.' },
-    { title: 'Keyword Strategy', desc: 'Discover high-value keywords your competitors rank for, with difficulty scores and target page recommendations.' },
-    { title: '90-Day Action Plan', desc: 'A week-by-week roadmap of exactly what to fix, prioritized by impact. Never wonder what to do next.' },
-    { title: 'Professional PDF Reports', desc: 'Download beautifully formatted, client-ready PDF reports. White Label plan removes all RankPilot branding.' },
-  ];
-
   return (
-    <div style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ background: '#fafafa' }}>
       {/* Hero */}
       <section style={{
-        background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
-        color: '#fff', padding: '80px 32px', textAlign: 'center'
+        background: 'linear-gradient(135deg, #14532d 0%, #16a34a 60%, #22c55e 100%)',
+        color: '#fff', padding: '80px 24px 60px', textAlign: 'center'
       }}>
         <h1 style={{ fontSize: 48, fontWeight: 800, margin: '0 0 16px', lineHeight: 1.1 }}>
-          Your Website Deserves<br/>Better Rankings
+          SEO Audit Tool
         </h1>
-        <p style={{ fontSize: 20, opacity: 0.9, maxWidth: 600, margin: '0 auto 40px' }}>
-          Get a comprehensive SEO audit with actionable fixes. Crawl every page, find every issue, boost your traffic.
+        <p style={{ fontSize: 20, opacity: 0.9, maxWidth: 600, margin: '0 auto 36px' }}>
+          Comprehensive multi-page SEO analysis with actionable fix recommendations, keyword strategy & 90-day action plans.
         </p>
-        <div style={{ display: 'flex', gap: 12, maxWidth: 500, margin: '0 auto' }}>
+        <div style={{
+          display: 'flex', gap: 12, maxWidth: 520, margin: '0 auto',
+          background: 'rgba(255,255,255,0.15)', borderRadius: 14, padding: 6
+        }}>
           <input
             value={url} onChange={e => setUrl(e.target.value)}
             placeholder="Enter your website URL..."
+            onKeyDown={e => e.key === 'Enter' && handleGo()}
             style={{
-              flex: 1, padding: '16px 20px', borderRadius: 12, border: 'none',
-              fontSize: 16, outline: 'none'
+              flex: 1, padding: '14px 18px', borderRadius: 10, border: 'none',
+              fontSize: 16, outline: 'none', background: '#fff', color: '#111'
             }}
           />
-          <button onClick={handleAudit} style={{
-            padding: '16px 32px', borderRadius: 12, border: 'none',
-            background: '#f59e0b', color: '#1e3a8a', fontWeight: 700,
-            fontSize: 16, cursor: 'pointer', whiteSpace: 'nowrap'
-          }}>Audit Now 🚀</button>
+          <button onClick={handleGo} style={{
+            padding: '14px 28px', borderRadius: 10, border: 'none',
+            background: '#fff', color: '#16a34a', fontWeight: 700, fontSize: 16,
+            cursor: 'pointer', whiteSpace: 'nowrap'
+          }}>Audit Now →</button>
         </div>
       </section>
 
       {/* Features */}
-      <section style={{ padding: '60px 32px', maxWidth: 1000, margin: '0 auto' }}>
-        <h2 style={{ textAlign: 'center', fontSize: 32, fontWeight: 700, marginBottom: 8 }}>
+      <section style={{ maxWidth: 1000, margin: '0 auto', padding: '60px 24px' }}>
+        <h2 style={{ textAlign: 'center', fontSize: 32, fontWeight: 700, marginBottom: 40, color: '#111' }}>
           What You Get
         </h2>
-        <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: 40 }}>
-          A complete SEO toolkit in one audit
-        </p>
-        <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
           {[
-            { icon: '🔍', title: 'Full Site Crawl', desc: 'Every page analyzed, not just the homepage' },
-            { icon: '📊', title: 'Detailed Scoring', desc: 'Color-coded scores across 8 SEO categories' },
-            { icon: '🔧', title: 'Fix Recommendations', desc: 'Exact steps to fix each issue found' },
-            { icon: '📈', title: 'Keyword Research', desc: 'High-value keyword opportunities identified' },
-            { icon: '📋', title: '90-Day Plan', desc: 'Week-by-week action items prioritized by impact' },
-            { icon: '📄', title: 'PDF Reports', desc: 'Professional client-ready report downloads' },
-          ].map(f => (
-            <div key={f.title} style={{
-              width: 280, padding: 24, borderRadius: 12,
+            { icon: '🌐', title: 'Full-Site Crawl', desc: 'Every page analyzed — not just your homepage. We crawl your entire site to find hidden issues.' },
+            { icon: '🎯', title: 'Color-Coded Issues', desc: 'Critical, Warning, and Good ratings with clear visual indicators so you know exactly what to fix first.' },
+            { icon: '🔧', title: 'Fix Recommendations', desc: 'Each issue comes with a specific "Fix:" box telling you exactly what to do. No guessing required.' },
+            { icon: '📊', title: 'Keyword Strategy', desc: 'Discover which keywords to target and how to optimize your content to rank higher in search results.' },
+            { icon: '📋', title: '90-Day Action Plan', desc: 'A structured roadmap breaking your SEO improvement into monthly milestones for steady progress.' },
+            { icon: '📄', title: 'Pro PDF Report', desc: 'Download a beautifully designed PDF report you can share with your team or clients.' },
+          ].map((f, i) => (
+            <div key={i} style={{
+              background: '#fff', borderRadius: 16, padding: 28,
               border: '1px solid #e5e7eb', textAlign: 'center'
             }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>{f.icon}</div>
-              <h3 style={{ margin: '0 0 8px', fontSize: 18 }}>{f.title}</h3>
-              <p style={{ margin: 0, color: '#6b7280', fontSize: 14 }}>{f.desc}</p>
+              <h3 style={{ margin: '0 0 8px', fontSize: 18, color: '#111' }}>{f.title}</h3>
+              <p style={{ margin: 0, color: '#6b7280', fontSize: 14, lineHeight: 1.6 }}>{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Report Preview Tabs */}
-      <section style={{ padding: '60px 32px', background: '#f8fafc' }}>
+      {/* Sample Report Preview */}
+      <section style={{ background: '#14532d', padding: '60px 24px', color: '#fff' }}>
+        <h2 style={{ textAlign: 'center', fontSize: 32, fontWeight: 700, marginBottom: 12 }}>
+          See What's Inside Your Pro Report
+        </h2>
+        <p style={{ textAlign: 'center', opacity: 0.8, maxWidth: 500, margin: '0 auto 40px', fontSize: 16 }}>
+          Real pages from an actual SEO audit report — this is what you'll receive.
+        </p>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <h2 style={{ textAlign: 'center', fontSize: 32, fontWeight: 700, marginBottom: 32 }}>
-            See What Your Report Looks Like
-          </h2>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
-            {tabs.map((t, i) => (
-              <button key={t} onClick={() => setActiveTab(i)} style={{
-                padding: '10px 20px', borderRadius: 8,
-                border: activeTab === i ? '2px solid #1e3a8a' : '1px solid #d1d5db',
-                background: activeTab === i ? '#1e3a8a' : '#fff',
-                color: activeTab === i ? '#fff' : '#374151',
-                fontWeight: 600, fontSize: 14, cursor: 'pointer'
-              }}>{t}</button>
-            ))}
-          </div>
+          {/* Main preview */}
           <div style={{
-            background: '#fff', borderRadius: 16, padding: 40,
-            border: '1px solid #e5e7eb', textAlign: 'center', minHeight: 200
+            background: '#fff', borderRadius: 16, overflow: 'hidden',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)', marginBottom: 24
           }}>
-            <ScoreCircle score={88} size={100} />
-            <h3 style={{ marginTop: 20, fontSize: 22 }}>{tabContent[activeTab].title}</h3>
-            <p style={{ color: '#6b7280', maxWidth: 500, margin: '12px auto 0' }}>
-              {tabContent[activeTab].desc}
-            </p>
+            <img
+              src={samplePages[previewIdx].src}
+              alt={samplePages[previewIdx].caption}
+              style={{ width: '100%', display: 'block' }}
+            />
+          </div>
+          <p style={{ textAlign: 'center', fontSize: 16, fontWeight: 600, marginBottom: 20 }}>
+            {samplePages[previewIdx].caption}
+          </p>
+          {/* Thumbnails */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+            {samplePages.map((sp, i) => (
+              <div key={i} onClick={() => setPreviewIdx(i)} style={{
+                cursor: 'pointer', borderRadius: 10, overflow: 'hidden',
+                border: i === previewIdx ? '3px solid #22c55e' : '3px solid transparent',
+                opacity: i === previewIdx ? 1 : 0.6, transition: 'all 0.2s',
+                width: 120
+              }}>
+                <img src={sp.src} alt={sp.caption} style={{ width: '100%', display: 'block' }}/>
+                <div style={{
+                  background: i === previewIdx ? '#22c55e' : 'rgba(255,255,255,0.1)',
+                  color: i === previewIdx ? '#fff' : '#ccc',
+                  fontSize: 10, fontWeight: 600, textAlign: 'center', padding: '4px 2px'
+                }}>{sp.caption}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section style={{ padding: '60px 32px' }}>
-        <h2 style={{ textAlign: 'center', fontSize: 32, fontWeight: 700, marginBottom: 8 }}>
-          Simple, Transparent Pricing
+      {/* How It Works */}
+      <section style={{ maxWidth: 800, margin: '0 auto', padding: '60px 24px' }}>
+        <h2 style={{ textAlign: 'center', fontSize: 32, fontWeight: 700, marginBottom: 40, color: '#111' }}>
+          How It Works
         </h2>
-        <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: 32 }}>
-          Start free. Upgrade when you need more power.
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {[
+            { step: '1', title: 'Enter Your URL', desc: 'Paste any website URL and we\'ll automatically discover and crawl every page.' },
+            { step: '2', title: 'Get Your Analysis', desc: 'Our engine checks 50+ SEO factors across every page with color-coded severity ratings.' },
+            { step: '3', title: 'Follow the Fixes', desc: 'Each issue includes a specific fix recommendation. Follow them to boost your rankings.' },
+          ].map((s, i) => (
+            <div key={i} style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: '50%', background: '#16a34a',
+                color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 800, fontSize: 20, flexShrink: 0
+              }}>{s.step}</div>
+              <div>
+                <h3 style={{ margin: '0 0 4px', fontSize: 18, color: '#111' }}>{s.title}</h3>
+                <p style={{ margin: 0, color: '#6b7280', fontSize: 15, lineHeight: 1.6 }}>{s.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section style={{ background: '#f0fdf4', padding: '60px 24px' }}>
+        <h2 style={{ textAlign: 'center', fontSize: 32, fontWeight: 700, marginBottom: 8, color: '#111' }}>
+          Choose Your Plan
+        </h2>
+        <p style={{ textAlign: 'center', color: '#6b7280', maxWidth: 500, margin: '0 auto 40px' }}>
+          Start free. Upgrade anytime for deeper insights and professional reports.
         </p>
         <PricingCards currentTier={user?.tier} onSelect={onSelectTier} />
       </section>

@@ -58,7 +58,7 @@ export default function AuditForm({ user, initialUrl, onResult }: Props) {
         />
         <button type="submit" disabled={loading} style={{
           padding: '14px 28px', borderRadius: 10, border: 'none',
-          background: loading ? '#9ca3af' : '#1e3a8a', color: '#fff',
+          background: loading ? '#9ca3af' : '#16a34a', color: '#fff',
           fontWeight: 600, fontSize: 15, cursor: loading ? 'default' : 'pointer'
         }}>{loading ? '⏳ Auditing...' : '🔍 Audit'}</button>
       </form>
@@ -66,7 +66,7 @@ export default function AuditForm({ user, initialUrl, onResult }: Props) {
         <span>Plan: {user.tier.toUpperCase()}</span>
         <span>{remaining}</span>
       </div>
-      {status && <div style={{ marginTop: 16, padding: 12, background: '#eff6ff', borderRadius: 8, color: '#1e40af', fontSize: 14 }}>⏳ {status}</div>}
+      {status && <div style={{ marginTop: 16, padding: 12, background: '#f0fdf4', borderRadius: 8, color: '#15803d', fontSize: 14 }}>⏳ {status}</div>}
       {error && <div style={{ marginTop: 16, padding: 12, background: '#fef2f2', borderRadius: 8, color: '#dc2626', fontSize: 14 }}>❌ {error}</div>}
     </div>
   );

@@ -12,9 +12,8 @@ export default function PaymentModal({ tier, onClose, onSuccess }: Props) {
   const name = tier === 'diy' ? 'DIY SEO' : 'White Label';
 
   const handlePayPal = () => {
-    const paypalUrl = `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=dumbele23@gmail.com&item_name=RankPilot+${encodeURIComponent(name)}+Plan&amount=${price}&currency_code=USD&return=${window.location.origin}/payment-success?tier=${tier}&cancel_return=${window.location.origin}`;
+    const paypalUrl = `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=dumbele23@gmail.com&item_name=SEO+Audit+Tool+${encodeURIComponent(name)}+Plan&amount=${price}&currency_code=USD&return=${window.location.origin}/payment-success?tier=${tier}&cancel_return=${window.location.origin}`;
     window.open(paypalUrl, '_blank');
-    // After payment, user clicks confirm
   };
 
   const handleConfirm = async () => {

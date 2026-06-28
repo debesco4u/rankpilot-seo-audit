@@ -1,5 +1,5 @@
 {
-  "name": "rankpilot-seo-audit",
+  "name": "seo-audit-tool-seo-audit",
   "private": true,
   "engines": {
     "node": "20.x"

@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import db from './db';
 
 const router = Router();
-const SECRET = process.env.JWT_SECRET || 'rankpilot-secret-key-change-in-prod';
+const SECRET = process.env.JWT_SECRET || 'seo-audit-tool-secret-key-change-in-prod';
 
 export function authMiddleware(req: Request, res: Response, next: Function) {
   const authHeader = req.headers.authorization;

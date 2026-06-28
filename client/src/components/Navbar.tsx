@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import type { User } from '../types';
 
 interface Props {
@@ -8,35 +8,50 @@ interface Props {
   onLogout: () => void;
 }
 
-const LOGO_B64 = "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";
-
 export default function Navbar({ user, onLoginClick, onLogout }: Props) {
+  const navigate = useNavigate();
+  const loc = useLocation();
+
+  const GlobeIcon = () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="2" y1="12" x2="22" y2="12"/>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+  );
+
   return (
     <nav style={{
-      display:'flex', alignItems:'center', justifyContent:'space-between',
-      padding:'12px 32px', background:'#1e3a8a', color:'#fff',
-      boxShadow:'0 2px 8px rgba(0,0,0,0.15)'
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '12px 32px', background: '#fff', borderBottom: '2px solid #16a34a',
+      position: 'sticky', top: 0, zIndex: 100
     }}>
-      <Link to="/" style={{ display:'flex', alignItems:'center', gap:10, textDecoration:'none', color:'#fff' }}>
-        <div style={{ fontSize:22, fontWeight:800 }}>🚀 RankPilot</div>
-        <span style={{ fontSize:13, opacity:0.8 }}>SEO Audit Tool</span>
-      </Link>
-      <div style={{ display:'flex', alignItems:'center', gap:16 }}>
-        <Link to="/" style={{ color:'#fff', textDecoration:'none', fontSize:14 }}>Home</Link>
-        {user && <Link to="/dashboard" style={{ color:'#fff', textDecoration:'none', fontSize:14 }}>Dashboard</Link>}
-        {user && <Link to="/account" style={{ color:'#fff', textDecoration:'none', fontSize:14 }}>Account</Link>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => navigate('/')}>
+        <GlobeIcon />
+        <span style={{ fontWeight: 800, fontSize: 20, color: '#111827' }}>SEO Audit Tool</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         {user ? (
-          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-            <span style={{ fontSize:13, opacity:0.9 }}>{user.name}</span>
+          <>
+            <button onClick={() => navigate('/dashboard')} style={{
+              padding: '8px 18px', borderRadius: 8, border: 'none',
+              background: loc.pathname === '/dashboard' ? '#f0fdf4' : 'transparent',
+              color: '#16a34a', fontWeight: 600, cursor: 'pointer', fontSize: 14
+            }}>Dashboard</button>
+            <button onClick={() => navigate('/account')} style={{
+              padding: '8px 18px', borderRadius: 8, border: 'none',
+              background: loc.pathname === '/account' ? '#f0fdf4' : 'transparent',
+              color: '#16a34a', fontWeight: 600, cursor: 'pointer', fontSize: 14
+            }}>Account</button>
             <button onClick={onLogout} style={{
-              padding:'6px 14px', border:'1px solid rgba(255,255,255,0.3)', borderRadius:6,
-              background:'transparent', color:'#fff', cursor:'pointer', fontSize:13
+              padding: '8px 18px', borderRadius: 8, border: '1px solid #d1d5db',
+              background: '#fff', color: '#6b7280', cursor: 'pointer', fontSize: 14
             }}>Logout</button>
-          </div>
+          </>
         ) : (
           <button onClick={onLoginClick} style={{
-            padding:'8px 20px', border:'none', borderRadius:8,
-            background:'#fff', color:'#1e3a8a', fontWeight:600, cursor:'pointer', fontSize:14
+            padding: '10px 24px', borderRadius: 8, border: 'none',
+            background: '#16a34a', color: '#fff', fontWeight: 600, cursor: 'pointer', fontSize: 14
           }}>Sign In</button>
         )}
       </div>

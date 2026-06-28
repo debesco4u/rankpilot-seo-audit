@@ -70,8 +70,8 @@ export default function Dashboard({ user }: Props) {
           <p style={{ margin: '4px 0 0', color: '#6b7280', fontSize: 14 }}>
             Welcome back, {user.name} · <span style={{
               padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600,
-              background: user.tier === 'free' ? '#f3f4f6' : user.tier === 'diy' ? '#dbeafe' : '#ede9fe',
-              color: user.tier === 'free' ? '#6b7280' : user.tier === 'diy' ? '#1e40af' : '#6d28d9'
+              background: user.tier === 'free' ? '#f3f4f6' : user.tier === 'diy' ? '#dcfce7' : '#ede9fe',
+              color: user.tier === 'free' ? '#6b7280' : user.tier === 'diy' ? '#15803d' : '#6d28d9'
             }}>{user.tier.toUpperCase()}</span>
           </p>
         </div>
@@ -104,7 +104,7 @@ export default function Dashboard({ user }: Props) {
               {isPaid && (
                 <button onClick={handleDownloadPdf} style={{
                   marginTop: 16, padding: '10px 24px', borderRadius: 8, border: 'none',
-                  background: '#1e3a8a', color: '#fff', fontWeight: 600, cursor: 'pointer'
+                  background: '#16a34a', color: '#fff', fontWeight: 600, cursor: 'pointer'
                 }}>📄 Download PDF Report</button>
               )}
             </div>
@@ -138,7 +138,7 @@ export default function Dashboard({ user }: Props) {
                 }}>
                   <div>{issue.message}</div>
                   {isPaid && issue.fix && (
-                    <div style={{ marginTop: 4, color: '#1e40af', fontWeight: 500 }}>
+                    <div style={{ marginTop: 4, color: '#15803d', fontWeight: 500 }}>
                       Fix: {issue.fix}
                     </div>
                   )}

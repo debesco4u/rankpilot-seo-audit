@@ -34,7 +34,7 @@ async function fetchPage(url: string): Promise<{ html: string; status: number; l
     const timeout = setTimeout(() => controller.abort(), 15000);
     const res = await fetch(url, {
       signal: controller.signal,
-      headers: { 'User-Agent': 'RankPilot-SEO-Bot/1.0' }
+      headers: { 'User-Agent': 'SEO Audit Tool-SEO-Bot/1.0' }
     });
     clearTimeout(timeout);
     const html = await res.text();
