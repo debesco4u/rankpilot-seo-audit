@@ -47,12 +47,12 @@ export default function AuditForm({ user, initialUrl, onResult }: Props) {
 
   return (
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
-      <form onSubmit={handleAudit} style={{ display: 'flex', gap: 12 }}>
+      <form onSubmit={handleAudit} style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 12 }}>
         <input
           value={url} onChange={e => setUrl(e.target.value)}
           placeholder="https://example.com"
           style={{
-            flex: 1, padding: '14px 18px', borderRadius: 10, border: '1px solid #d1d5db',
+            flex: '1 1 250px', padding: '14px 18px', borderRadius: 10, minWidth: 0, boxSizing: 'border-box' as const, border: '1px solid #d1d5db',
             fontSize: 16, outline: 'none'
           }}
         />

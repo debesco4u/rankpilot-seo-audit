@@ -29,35 +29,38 @@ export default function Landing({ user, onLoginClick, onSelectTier }: Props) {
   };
 
   return (
-    <div style={{ background: '#fafafa' }}>
+    <div style={{ background: '#fafafa', overflowX: 'hidden' as const }}>
       {/* Hero */}
       <section style={{
         background: 'linear-gradient(135deg, #14532d 0%, #16a34a 60%, #22c55e 100%)',
-        color: '#fff', padding: '80px 24px 60px', textAlign: 'center'
+        color: '#fff', padding: '80px 16px 60px', textAlign: 'center', overflowX: 'hidden' as const, boxSizing: 'border-box' as const
       }}>
-        <h1 style={{ fontSize: 48, fontWeight: 800, margin: '0 0 16px', lineHeight: 1.1 }}>
-          SEO Audit Tool
+        <h1 style={{ fontSize: 'clamp(28px, 6vw, 48px)', fontWeight: 800, margin: '0 0 16px', lineHeight: 1.1 }}>
+          Boost Your Website's SEO with AI-Powered Audits
         </h1>
         <p style={{ fontSize: 20, opacity: 0.9, maxWidth: 600, margin: '0 auto 36px' }}>
           Comprehensive multi-page SEO analysis with actionable fix recommendations, keyword strategy & 90-day action plans.
         </p>
         <div style={{
-          display: 'flex', gap: 12, maxWidth: 520, margin: '0 auto',
-          background: 'rgba(255,255,255,0.15)', borderRadius: 14, padding: 6
+          display: 'flex', flexWrap: 'wrap', gap: 10, maxWidth: 520, margin: '0 auto',
+          background: 'rgba(255,255,255,0.15)', borderRadius: 14, padding: 8,
+          boxSizing: 'border-box' as const, width: '100%'
         }}>
           <input
             value={url} onChange={e => setUrl(e.target.value)}
             placeholder="Enter your website URL..."
             onKeyDown={e => e.key === 'Enter' && handleGo()}
             style={{
-              flex: 1, padding: '14px 18px', borderRadius: 10, border: 'none',
-              fontSize: 16, outline: 'none', background: '#fff', color: '#111'
+              flex: '1 1 250px', padding: '14px 18px', borderRadius: 10, border: 'none',
+              fontSize: 16, outline: 'none', background: '#fff', color: '#111',
+              minWidth: 0, boxSizing: 'border-box' as const
             }}
           />
           <button onClick={handleGo} style={{
-            padding: '14px 28px', borderRadius: 10, border: 'none',
+            flex: '0 0 auto', padding: '14px 28px', borderRadius: 10, border: 'none',
             background: '#fff', color: '#16a34a', fontWeight: 700, fontSize: 16,
-            cursor: 'pointer', whiteSpace: 'nowrap'
+            cursor: 'pointer', whiteSpace: 'nowrap', width: 'auto',
+            boxSizing: 'border-box' as const
           }}>Audit Now →</button>
         </div>
       </section>
