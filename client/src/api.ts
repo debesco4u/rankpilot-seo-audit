@@ -14,11 +14,23 @@ async function req(path: string, opts: RequestInit = {}) {
 
 export const api = {
   // Auth
-  signup: (email: string, password: string, name: string) =>
+  register: (name: string, email: string, password: string) =>
     req('/auth/signup', { method: 'POST', body: JSON.stringify({ email, password, name }) }),
   login: (email: string, password: string) =>
     req('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   me: () => req('/auth/me'),
+
+  // Forgot / Reset password
+  forgotPassword: async (email: string) => {
+    const r = await fetch(`${BASE}/auth/forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+    if (!r.ok) throw new Error((await r.json()).error);
+    return r.json();
+  },
+  resetPassword: async (token: string, newPassword: string) => {
+    const r = await fetch(`${BASE}/auth/reset-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, newPassword }) });
+    if (!r.ok) throw new Error((await r.json()).error);
+    return r.json();
+  },
 
   // Subscription
   subscribe: (tier: string) =>

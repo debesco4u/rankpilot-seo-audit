@@ -60,4 +60,25 @@ router.get('/me', authMiddleware, (req: Request, res: Response) => {
   res.json(user);
 });
 
+
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  const user = db.prepare('SELECT id FROM users WHERE email=?').get(email) as any;
+  if (!user) return res.json({ message: 'If that email exists, a reset token was generated.' });
+  const token = require('crypto').randomBytes(20).toString('hex');
+  db.prepare('UPDATE users SET reset_token=? WHERE id=?').run(token, user.id);
+  res.json({ message: 'Reset token generated.', resetToken: token });
+});
+
+router.post('/reset-password', async (req, res) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) return res.status(400).json({ error: 'Token and new password required' });
+  const user = db.prepare('SELECT id FROM users WHERE reset_token=?').get(token) as any;
+  if (!user) return res.status(400).json({ error: 'Invalid or expired token' });
+  const bcrypt = require('bcryptjs');
+  const hash = bcrypt.hashSync(newPassword, 10);
+  db.prepare('UPDATE users SET password=?, reset_token=NULL WHERE id=?').run(hash, user.id);
+  res.json({ message: 'Password reset successfully. You can now log in.' });
+});
+
 export default router;

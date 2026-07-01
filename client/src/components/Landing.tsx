@@ -32,7 +32,7 @@ export default function Landing({ user, onLoginClick, onSelectTier }: Props) {
     <div style={{ background: '#fafafa', overflowX: 'hidden' as const }}>
       {/* Hero */}
       <section style={{
-        background: 'linear-gradient(135deg, #14532d 0%, #16a34a 60%, #22c55e 100%)',
+        background: '#ffffff',
         color: '#fff', padding: '80px 16px 60px', textAlign: 'center', overflowX: 'hidden' as const, boxSizing: 'border-box' as const
       }}>
         <h1 style={{ fontSize: 'clamp(28px, 6vw, 48px)', fontWeight: 800, margin: '0 0 16px', lineHeight: 1.1 }}>
@@ -127,7 +127,7 @@ export default function Landing({ user, onLoginClick, onSelectTier }: Props) {
                 <div style={{
                   background: i === previewIdx ? '#22c55e' : 'rgba(255,255,255,0.1)',
                   color: i === previewIdx ? '#fff' : '#ccc',
-                  fontSize: 10, fontWeight: 600, textAlign: 'center', padding: '4px 2px'
+                  fontSize: 10, fontWeight: 600, textAlign: 'center', padding: '60px 16px'
                 }}>{sp.caption}</div>
               </div>
             ))}

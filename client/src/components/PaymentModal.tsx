@@ -30,7 +30,7 @@ export default function PaymentModal({ tier, onClose, onSuccess }: Props) {
 
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }} onClick={onClose}>
-      <div style={{ background:'#fff', borderRadius:16, padding:32, width:420, maxWidth:'90vw' }} onClick={e=>e.stopPropagation()}>
+      <div style={{ background:'#fff', borderRadius:16, padding:32, width:'100%',maxWidth:420 }} onClick={e=>e.stopPropagation()}>
         <h2 style={{ margin:'0 0 8px' }}>Subscribe to {name}</h2>
         <p style={{ color:'#6b7280', margin:'0 0 24px' }}>${price}/month</p>
         <button onClick={handlePayPal} style={{
