@@ -58,7 +58,7 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'Inter, sans-serif' }}>
-      <Navbar user={user} onLoginClick={() => setShowAuth(true)} onLogout={handleLogout} />
+      <Navbar user={user} onLoginClick={() => setShowAuth(true)} onLogout={handleLogout} onSelectTier={handleSelectTier} onNavigate={(p) => p === "home" ? navigate("/") : p === "dashboard" ? navigate("/dashboard") : p === "account" ? navigate("/account") : null} />
       <div style={{ flex: 1 }}>
         <Routes>
           <Route path="/" element={<Landing user={user} onLoginClick={() => setShowAuth(true)} onSelectTier={handleSelectTier} />} />

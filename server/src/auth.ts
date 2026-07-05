@@ -19,7 +19,7 @@ export function authMiddleware(req: Request, res: Response, next: Function) {
   }
 }
 
-router.post('/signup', async (req: Request, res: Response) => {
+router.post('/register', async (req: Request, res: Response) => {
   try {
     const { email, password, name } = req.body;
     if (!email || !password || !name) return res.status(400).json({ error: 'All fields required' });
@@ -54,7 +54,7 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/me', authMiddleware, (req: Request, res: Response) => {
+router.get('/profile', authMiddleware, (req: Request, res: Response) => {
   const user = db.prepare('SELECT id, email, name, tier FROM users WHERE id = ?').get((req as any).userId) as any;
   if (!user) return res.status(404).json({ error: 'User not found' });
   res.json(user);

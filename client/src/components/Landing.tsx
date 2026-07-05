@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PricingCards from './PricingCards';
-import type { User, Tier } from '../types';
+import { User, Tier } from '../types';
 
 interface Props {
   user: User | null;
@@ -9,167 +8,130 @@ interface Props {
   onSelectTier: (tier: Tier) => void;
 }
 
-const samplePages = [
-  { src: '/samples/sample_2.jpg', caption: 'Executive Summary' },
-  { src: '/samples/sample_4.jpg', caption: 'Page-by-Page Analysis' },
-  { src: '/samples/sample_6.jpg', caption: 'Issue Breakdown' },
-  { src: '/samples/sample_14.jpg', caption: 'Keyword Strategy' },
-  { src: '/samples/sample_16.jpg', caption: '90-Day Action Plan' },
-];
-
 export default function Landing({ user, onLoginClick, onSelectTier }: Props) {
   const navigate = useNavigate();
   const [url, setUrl] = useState('');
-  const [previewIdx, setPreviewIdx] = useState(0);
 
-  const handleGo = () => {
+  const handleAudit = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!url.trim()) return;
-    if (!user) { onLoginClick(); return; }
-    navigate('/dashboard', { state: { url: url.trim() } });
+    const encoded = encodeURIComponent(url.trim().replace(/^https?:\/\//, '').replace(/\/$/, ''));
+    navigate(`/audit?url=${encoded}`);
   };
 
+  const plans = [
+    { name: 'Free', price: '$0', period: '/forever', tier: 'free', features: ['General SEO audit', '5 searches/day', 'Basic score overview', 'Limited recommendations'], cta: 'Start Free', highlight: false },
+    { name: 'DIY SEO', price: '$15', period: '/month', tier: 'diy', features: ['Full site crawl audit', 'Unlimited searches', 'Advanced fix recommendations', 'Keyword strategy', '90-day action plan', 'Audit history'], cta: 'Get Started', highlight: true },
+    { name: 'White Label', price: '$20', period: '/month', tier: 'whitelabel', features: ['Everything in DIY SEO', 'Detailed PDF reports', 'Remove all branding', 'Custom report headers', 'Client-ready exports', 'Priority support'], cta: 'Go Pro', highlight: false },
+  ];
+
+  const section: React.CSSProperties = { padding: '80px 24px', maxWidth: 1100, margin: '0 auto', textAlign: 'center' };
+
   return (
-    <div style={{ background: '#fafafa', overflowX: 'hidden' as const }}>
+    <div style={{ background: '#fff', minHeight: '100vh' }}>
       {/* Hero */}
-      <section style={{
-        background: '#ffffff',
-        color: '#fff', padding: '80px 16px 60px', textAlign: 'center', overflowX: 'hidden' as const, boxSizing: 'border-box' as const
-      }}>
-        <h1 style={{ fontSize: 'clamp(28px, 6vw, 48px)', fontWeight: 800, margin: '0 0 16px', lineHeight: 1.1 }}>
+      <section style={{ ...section, paddingTop: 100, paddingBottom: 60 }}>
+        <h1 style={{ fontSize: 'clamp(28px, 5vw, 48px)', fontWeight: 800, color: '#16a34a', marginBottom: 16, lineHeight: 1.2 }}>
           Boost Your Website's SEO with AI-Powered Audits
         </h1>
-        <p style={{ fontSize: 20, opacity: 0.9, maxWidth: 600, margin: '0 auto 36px' }}>
-          Comprehensive multi-page SEO analysis with actionable fix recommendations, keyword strategy & 90-day action plans.
+        <p style={{ fontSize: 'clamp(16px, 2.5vw, 20px)', color: '#4b5563', maxWidth: 650, margin: '0 auto 32px', lineHeight: 1.6 }}>
+          Get actionable insights to improve your search rankings. Analyze any website in seconds with our comprehensive SEO audit tool.
         </p>
-        <div style={{
-          display: 'flex', flexWrap: 'wrap', gap: 10, maxWidth: 520, margin: '0 auto',
-          background: 'rgba(255,255,255,0.15)', borderRadius: 14, padding: 8,
-          boxSizing: 'border-box' as const, width: '100%'
-        }}>
+        <form onSubmit={handleAudit} style={{ display: 'flex', gap: 12, maxWidth: 550, margin: '0 auto', flexWrap: 'wrap', justifyContent: 'center' }}>
           <input
-            value={url} onChange={e => setUrl(e.target.value)}
-            placeholder="Enter your website URL..."
-            onKeyDown={e => e.key === 'Enter' && handleGo()}
-            style={{
-              flex: '1 1 250px', padding: '14px 18px', borderRadius: 10, border: 'none',
-              fontSize: 16, outline: 'none', background: '#fff', color: '#111',
-              minWidth: 0, boxSizing: 'border-box' as const
-            }}
+            type="text"
+            placeholder="Enter website URL (e.g. example.com)"
+            value={url}
+            onChange={e => setUrl(e.target.value)}
+            style={{ flex: 1, minWidth: 220, padding: '14px 18px', border: '2px solid #e5e7eb', borderRadius: 10, fontSize: 16, outline: 'none', boxSizing: 'border-box' }}
+            onFocus={e => (e.target.style.borderColor = '#16a34a')}
+            onBlur={e => (e.target.style.borderColor = '#e5e7eb')}
           />
-          <button onClick={handleGo} style={{
-            flex: '0 0 auto', padding: '14px 28px', borderRadius: 10, border: 'none',
-            background: '#fff', color: '#16a34a', fontWeight: 700, fontSize: 16,
-            cursor: 'pointer', whiteSpace: 'nowrap', width: 'auto',
-            boxSizing: 'border-box' as const
-          }}>Audit Now →</button>
-        </div>
+          <button type="submit" style={{ padding: '14px 32px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            Analyze Now
+          </button>
+        </form>
+        <p style={{ fontSize: 13, color: '#9ca3af', marginTop: 14 }}>No signup required for basic audits · Free forever</p>
       </section>
 
       {/* Features */}
-      <section style={{ maxWidth: 1000, margin: '0 auto', padding: '60px 24px' }}>
-        <h2 style={{ textAlign: 'center', fontSize: 32, fontWeight: 700, marginBottom: 40, color: '#111' }}>
-          What You Get
-        </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
-          {[
-            { icon: '🌐', title: 'Full-Site Crawl', desc: 'Every page analyzed — not just your homepage. We crawl your entire site to find hidden issues.' },
-            { icon: '🎯', title: 'Color-Coded Issues', desc: 'Critical, Warning, and Good ratings with clear visual indicators so you know exactly what to fix first.' },
-            { icon: '🔧', title: 'Fix Recommendations', desc: 'Each issue comes with a specific "Fix:" box telling you exactly what to do. No guessing required.' },
-            { icon: '📊', title: 'Keyword Strategy', desc: 'Discover which keywords to target and how to optimize your content to rank higher in search results.' },
-            { icon: '📋', title: '90-Day Action Plan', desc: 'A structured roadmap breaking your SEO improvement into monthly milestones for steady progress.' },
-            { icon: '📄', title: 'Pro PDF Report', desc: 'Download a beautifully designed PDF report you can share with your team or clients.' },
-          ].map((f, i) => (
-            <div key={i} style={{
-              background: '#fff', borderRadius: 16, padding: 28,
-              border: '1px solid #e5e7eb', textAlign: 'center'
-            }}>
-              <div style={{ fontSize: 36, marginBottom: 12 }}>{f.icon}</div>
-              <h3 style={{ margin: '0 0 8px', fontSize: 18, color: '#111' }}>{f.title}</h3>
-              <p style={{ margin: 0, color: '#6b7280', fontSize: 14, lineHeight: 1.6 }}>{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Sample Report Preview */}
-      <section style={{ background: '#14532d', padding: '60px 24px', color: '#fff' }}>
-        <h2 style={{ textAlign: 'center', fontSize: 32, fontWeight: 700, marginBottom: 12 }}>
-          See What's Inside Your Pro Report
-        </h2>
-        <p style={{ textAlign: 'center', opacity: 0.8, maxWidth: 500, margin: '0 auto 40px', fontSize: 16 }}>
-          Real pages from an actual SEO audit report — this is what you'll receive.
-        </p>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          {/* Main preview */}
-          <div style={{
-            background: '#fff', borderRadius: 16, overflow: 'hidden',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)', marginBottom: 24
-          }}>
-            <img
-              src={samplePages[previewIdx].src}
-              alt={samplePages[previewIdx].caption}
-              style={{ width: '100%', display: 'block' }}
-            />
-          </div>
-          <p style={{ textAlign: 'center', fontSize: 16, fontWeight: 600, marginBottom: 20 }}>
-            {samplePages[previewIdx].caption}
-          </p>
-          {/* Thumbnails */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
-            {samplePages.map((sp, i) => (
-              <div key={i} onClick={() => setPreviewIdx(i)} style={{
-                cursor: 'pointer', borderRadius: 10, overflow: 'hidden',
-                border: i === previewIdx ? '3px solid #22c55e' : '3px solid transparent',
-                opacity: i === previewIdx ? 1 : 0.6, transition: 'all 0.2s',
-                width: 120
-              }}>
-                <img src={sp.src} alt={sp.caption} style={{ width: '100%', display: 'block' }}/>
-                <div style={{
-                  background: i === previewIdx ? '#22c55e' : 'rgba(255,255,255,0.1)',
-                  color: i === previewIdx ? '#fff' : '#ccc',
-                  fontSize: 10, fontWeight: 600, textAlign: 'center', padding: '60px 16px'
-                }}>{sp.caption}</div>
+      <section style={{ background: '#f9fafb', padding: '60px 24px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <h2 style={{ textAlign: 'center', fontSize: 'clamp(22px, 4vw, 32px)', fontWeight: 700, color: '#111', marginBottom: 40 }}>Why Choose Our SEO Tool?</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24 }}>
+            {[
+              { icon: '🔍', title: 'Deep Site Analysis', desc: 'Crawl every page — not just the homepage. Find hidden issues affecting your rankings.' },
+              { icon: '⚡', title: 'Instant Results', desc: 'Get a comprehensive audit in seconds with actionable fix recommendations.' },
+              { icon: '📊', title: 'Detailed Reports', desc: 'Color-coded PDF reports with scores, keyword strategy, and a 90-day action plan.' },
+              { icon: '🎯', title: 'Keyword Strategy', desc: 'Discover high-impact keywords and learn exactly where to target them.' },
+              { icon: '📱', title: 'Mobile Analysis', desc: 'Check mobile-friendliness, viewport settings, and responsive design issues.' },
+              { icon: '🔒', title: 'Security Check', desc: 'Verify SSL certificates, check for mixed content, and assess site security.' },
+            ].map((f, i) => (
+              <div key={i} style={{ background: '#fff', borderRadius: 12, padding: 28, border: '1px solid #e5e7eb', textAlign: 'left' }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>{f.icon}</div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111', marginBottom: 8 }}>{f.title}</h3>
+                <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section style={{ maxWidth: 800, margin: '0 auto', padding: '60px 24px' }}>
-        <h2 style={{ textAlign: 'center', fontSize: 32, fontWeight: 700, marginBottom: 40, color: '#111' }}>
-          How It Works
-        </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {[
-            { step: '1', title: 'Enter Your URL', desc: 'Paste any website URL and we\'ll automatically discover and crawl every page.' },
-            { step: '2', title: 'Get Your Analysis', desc: 'Our engine checks 50+ SEO factors across every page with color-coded severity ratings.' },
-            { step: '3', title: 'Follow the Fixes', desc: 'Each issue includes a specific fix recommendation. Follow them to boost your rankings.' },
-          ].map((s, i) => (
-            <div key={i} style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-              <div style={{
-                width: 48, height: 48, borderRadius: '50%', background: '#16a34a',
-                color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 800, fontSize: 20, flexShrink: 0
-              }}>{s.step}</div>
-              <div>
-                <h3 style={{ margin: '0 0 4px', fontSize: 18, color: '#111' }}>{s.title}</h3>
-                <p style={{ margin: 0, color: '#6b7280', fontSize: 15, lineHeight: 1.6 }}>{s.desc}</p>
+      {/* Pricing */}
+      <section id="pricing" style={{ ...section, paddingBottom: 80 }}>
+        <h2 style={{ fontSize: 'clamp(22px, 4vw, 32px)', fontWeight: 700, color: '#111', marginBottom: 12 }}>Simple, Transparent Pricing</h2>
+        <p style={{ color: '#6b7280', marginBottom: 40, fontSize: 16 }}>Choose the plan that fits your needs. Upgrade or downgrade anytime.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, maxWidth: 960, margin: '0 auto' }}>
+          {plans.map((p, i) => (
+            <div key={i} style={{
+              background: p.highlight ? '#16a34a' : '#fff',
+              color: p.highlight ? '#fff' : '#111',
+              borderRadius: 16,
+              padding: 32,
+              border: p.highlight ? 'none' : '1px solid #e5e7eb',
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative',
+              boxShadow: p.highlight ? '0 8px 32px rgba(22,163,74,0.2)' : 'none',
+            }}>
+              {p.highlight && (
+                <span style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#fbbf24', color: '#111', fontSize: 12, fontWeight: 700, padding: '4px 16px', borderRadius: 20 }}>MOST POPULAR</span>
+              )}
+              <h3 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>{p.name}</h3>
+              <div style={{ marginBottom: 20 }}>
+                <span style={{ fontSize: 40, fontWeight: 800 }}>{p.price}</span>
+                <span style={{ fontSize: 16, opacity: 0.8 }}>{p.period}</span>
               </div>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', textAlign: 'left', flex: 1 }}>
+                {p.features.map((f, j) => (
+                  <li key={j} style={{ padding: '6px 0', fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ color: p.highlight ? '#bbf7d0' : '#16a34a', fontWeight: 700 }}>✓</span> {f}
+                  </li>
+                ))}
+              </ul>
+              <button
+                onClick={() => {
+                  if (p.tier === 'free') { navigate('/audit'); return; }
+                  if (!user) { onLoginClick(); return; }
+                  onSelectTier(p.tier as Tier);
+                }}
+                style={{
+                  padding: '12px 24px',
+                  background: p.highlight ? '#fff' : '#16a34a',
+                  color: p.highlight ? '#16a34a' : '#fff',
+                  border: 'none',
+                  borderRadius: 10,
+                  fontSize: 16,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  width: '100%',
+                }}
+              >
+                {p.cta}
+              </button>
             </div>
           ))}
         </div>
-      </section>
-
-      {/* Pricing */}
-      <section style={{ background: '#f0fdf4', padding: '60px 24px' }}>
-        <h2 style={{ textAlign: 'center', fontSize: 32, fontWeight: 700, marginBottom: 8, color: '#111' }}>
-          Choose Your Plan
-        </h2>
-        <p style={{ textAlign: 'center', color: '#6b7280', maxWidth: 500, margin: '0 auto 40px' }}>
-          Start free. Upgrade anytime for deeper insights and professional reports.
-        </p>
-        <PricingCards currentTier={user?.tier} onSelect={onSelectTier} />
       </section>
     </div>
   );
