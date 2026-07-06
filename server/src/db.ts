@@ -15,6 +15,7 @@ db.exec(`
     password TEXT NOT NULL,
     name TEXT NOT NULL,
     tier TEXT DEFAULT 'free',
+    reset_token TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   );
   CREATE TABLE IF NOT EXISTS audits (
@@ -34,5 +35,12 @@ db.exec(`
     PRIMARY KEY (user_id, date)
   );
 `);
+
+// Migrate: add reset_token if missing (for existing DBs)
+try {
+  db.prepare("SELECT reset_token FROM users LIMIT 0").run();
+} catch {
+  db.exec("ALTER TABLE users ADD COLUMN reset_token TEXT");
+}
 
 export default db;
