@@ -29,7 +29,10 @@ export default function AuthModal({ onAuth, onClose }: Props) {
       } else if (mode === 'register') {
         const data = await api.register(email, password, name);
         localStorage.setItem('token', data.token);
-        onAuth(data.user, data.token);
+        setMsg('Account created successfully! Redirecting...');
+        setTimeout(() => onAuth(data.user, data.token), 1200);
+        setLoading(false);
+        return;
       } else if (mode === 'forgot') {
         await api.forgotPassword(email);
         setMsg('If an account exists, a reset link has been sent.');

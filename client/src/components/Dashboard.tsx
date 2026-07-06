@@ -99,7 +99,7 @@ export default function Dashboard({ user }: Props) {
           }}>
             <ScoreCircle score={audit.overallScore} size={140} label="Overall SEO Score" />
             <div>
-              <h2 style={{ margin: '0 0 8px' }}>{audit.domain}</h2>
+              <h2 style={{ margin: '0 0 8px', wordBreak: 'break-all' as const, overflowWrap: 'anywhere' as const }}>{audit.domain}</h2>
               <p style={{ margin: 0, color: '#6b7280' }}>{audit.pages.length} pages crawled · {new Date(audit.timestamp).toLocaleString()}</p>
               {isPaid && (
                 <button onClick={handleDownloadPdf} style={{
@@ -119,8 +119,8 @@ export default function Dashboard({ user }: Props) {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: 15 }}>{page.title || page.url}</div>
-                  <div style={{ fontSize: 13, color: '#6b7280' }}>{page.url}</div>
+                  <div style={{ fontWeight: 600, fontSize: 15, wordBreak: 'break-word' as const, overflowWrap: 'anywhere' as const }}>{page.title || page.url}</div>
+                  <div style={{ fontSize: 13, color: '#6b7280', wordBreak: 'break-all' as const, overflowWrap: 'anywhere' as const }}>{page.url}</div>
                 </div>
                 <div style={{
                   fontSize: 24, fontWeight: 800,

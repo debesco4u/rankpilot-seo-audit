@@ -28,6 +28,8 @@ export default function App() {
   const handleAuth = (u: User, token: string) => {
     setUser(u);
     localStorage.setItem('rp_token', token);
+    setShowAuth(false);
+    navigate('/dashboard');
   };
 
   const handleLogout = () => {
