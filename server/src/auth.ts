@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from './db';
+import { sendResetEmail } from './email';
 
 const router = Router();
 const SECRET = process.env.JWT_SECRET || 'seo-audit-tool-secret-key-change-in-prod';
@@ -68,7 +69,13 @@ router.post('/forgot-password', async (req, res) => {
   if (!user) return res.status(404).json({ error: 'Email not found. Please check your email or create an account.' });
   const token = require('crypto').randomBytes(20).toString('hex');
   db.prepare('UPDATE users SET reset_token=? WHERE id=?').run(token, user.id);
-  res.json({ message: 'Reset token generated successfully.', resetToken: token });
+  try {
+    await sendResetEmail(email, token);
+    res.json({ message: 'A reset token has been sent to your email.' });
+  } catch (err: any) {
+    console.error('Email send error:', err.message);
+    res.status(500).json({ error: 'Failed to send reset email. Please try again later.' });
+  }
 });
 
 router.post('/reset-password', async (req, res) => {
