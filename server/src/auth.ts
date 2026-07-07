@@ -63,11 +63,12 @@ router.get('/profile', authMiddleware, (req: Request, res: Response) => {
 
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email is required' });
   const user = db.prepare('SELECT id FROM users WHERE email=?').get(email) as any;
-  if (!user) return res.json({ message: 'If that email exists, a reset token was generated.' });
+  if (!user) return res.status(404).json({ error: 'Email not found. Please check your email or create an account.' });
   const token = require('crypto').randomBytes(20).toString('hex');
   db.prepare('UPDATE users SET reset_token=? WHERE id=?').run(token, user.id);
-  res.json({ message: 'Reset token generated.', resetToken: token });
+  res.json({ message: 'Reset token generated successfully.', resetToken: token });
 });
 
 router.post('/reset-password', async (req, res) => {

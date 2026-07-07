@@ -34,8 +34,14 @@ export default function AuthModal({ onAuth, onClose }: Props) {
         setLoading(false);
         return;
       } else if (mode === 'forgot') {
-        await api.forgotPassword(email);
-        setMsg('If an account exists, a reset link has been sent.');
+        const data = await api.forgotPassword(email);
+        if (data.resetToken) {
+          setResetToken(data.resetToken);
+          setMsg('Your reset token has been generated. Use it below to set a new password.');
+          setMode('reset');
+        }
+        setLoading(false);
+        return;
       } else if (mode === 'reset') {
         await api.resetPassword(resetToken, newPassword);
         setMsg('Password reset! You can now log in.');
