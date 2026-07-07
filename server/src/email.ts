@@ -1,20 +1,42 @@
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE === 'true',
-  auth: {
-    user: process.env.SMTP_USER || '',
-    pass: process.env.SMTP_PASS || '',
-  },
+function createTransporter() {
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const port = parseInt(process.env.SMTP_PORT || '587');
+  const user = process.env.SMTP_USER || '';
+  const pass = process.env.SMTP_PASS || '';
+
+  console.log(`[EMAIL] Configuring SMTP: host=${host}, port=${port}, user=${user ? user.substring(0,4) + '***' : '(empty)'}, pass=${pass ? '****set' : '(empty)'}`);
+
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass },
+    tls: { rejectUnauthorized: false },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
+  });
+}
+
+const transporter = createTransporter();
+
+// Verify on startup
+transporter.verify().then(() => {
+  console.log('[EMAIL] SMTP connection verified — ready to send');
+}).catch((err) => {
+  console.error('[EMAIL] SMTP verification failed:', err.message);
+  console.error('[EMAIL] Check SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS env vars');
 });
 
 export async function sendResetEmail(to: string, token: string): Promise<void> {
   const fromName = process.env.SMTP_FROM_NAME || 'SEO Audit Tool';
   const fromEmail = process.env.SMTP_USER || 'noreply@example.com';
 
-  await transporter.sendMail({
+  console.log(`[EMAIL] Sending reset email to ${to}...`);
+
+  const info = await transporter.sendMail({
     from: `"${fromName}" <${fromEmail}>`,
     to,
     subject: 'Password Reset - SEO Audit Tool',
@@ -36,4 +58,6 @@ export async function sendResetEmail(to: string, token: string): Promise<void> {
       </div>
     `,
   });
+
+  console.log(`[EMAIL] Sent successfully: messageId=${info.messageId}`);
 }
