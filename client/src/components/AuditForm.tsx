@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { User, SiteAudit } from '../types';
 
 interface Props {
-  user: User;
+  user: User | null;
   initialUrl?: string;
   onResult: (audit: SiteAudit) => void;
 }
@@ -43,7 +43,7 @@ export default function AuditForm({ user, initialUrl, onResult }: Props) {
     }
   };
 
-  const remaining = user.tier === 'free' ? '5 audits/day' : 'Unlimited';
+  const remaining = !user || user.tier === 'free' ? '5 audits/day' : 'Unlimited';
 
   return (
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
@@ -63,7 +63,7 @@ export default function AuditForm({ user, initialUrl, onResult }: Props) {
         }}>{loading ? '⏳ Auditing...' : '🔍 Audit'}</button>
       </form>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 13, color: '#6b7280' }}>
-        <span>Plan: {user.tier.toUpperCase()}</span>
+        <span>Plan: {(user?.tier || 'free').toUpperCase()}</span>
         <span>{remaining}</span>
       </div>
       {status && <div style={{ marginTop: 16, padding: 12, background: '#f0fdf4', borderRadius: 8, color: '#15803d', fontSize: 14 }}>⏳ {status}</div>}

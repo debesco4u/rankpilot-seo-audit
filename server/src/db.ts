@@ -20,7 +20,7 @@ db.exec(`
   );
   CREATE TABLE IF NOT EXISTS audits (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
     domain TEXT NOT NULL,
     data TEXT NOT NULL,
     score INTEGER NOT NULL,
@@ -29,7 +29,7 @@ db.exec(`
     FOREIGN KEY (user_id) REFERENCES users(id)
   );
   CREATE TABLE IF NOT EXISTS audit_counts (
-    user_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
     date TEXT NOT NULL,
     count INTEGER DEFAULT 0,
     PRIMARY KEY (user_id, date)

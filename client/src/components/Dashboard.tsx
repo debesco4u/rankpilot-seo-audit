@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import AuditForm from './AuditForm';
 import AuditHistory from './AuditHistory';
 import ScoreCircle from './ScoreCircle';
 import type { User, SiteAudit, Tier } from '../types';
 
 interface Props {
-  user: User;
+  user: User | null;
 }
 
 export default function Dashboard({ user }: Props) {
   const location = useLocation();
-  const initialUrl = (location.state as any)?.url || '';
+  const [searchParams] = useSearchParams();
+  const initialUrl = searchParams.get('url') || (location.state as any)?.url || '';
   const [audit, setAudit] = useState<SiteAudit | null>(null);
   const [history, setHistory] = useState<any[]>([]);
   const [view, setView] = useState<'form' | 'result'>('form');
@@ -60,7 +61,7 @@ export default function Dashboard({ user }: Props) {
   };
 
   const scoreColor = (s: number) => s >= 80 ? '#22c55e' : s >= 50 ? '#eab308' : '#ef4444';
-  const isPaid = user.tier !== 'free';
+  const isPaid = user ? user.tier !== 'free' : false;
 
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 24px' }}>
@@ -68,11 +69,11 @@ export default function Dashboard({ user }: Props) {
         <div>
           <h1 style={{ margin: 0, fontSize: 28 }}>Dashboard</h1>
           <p style={{ margin: '4px 0 0', color: '#6b7280', fontSize: 14 }}>
-            Welcome back, {user.name} · <span style={{
+            Welcome back, {user?.name || 'Guest'} · <span style={{
               padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600,
-              background: user.tier === 'free' ? '#f3f4f6' : user.tier === 'diy' ? '#dcfce7' : '#ede9fe',
-              color: user.tier === 'free' ? '#6b7280' : user.tier === 'diy' ? '#15803d' : '#6d28d9'
-            }}>{user.tier.toUpperCase()}</span>
+              background: !user || user.tier === 'free' ? '#f3f4f6' : user.tier === 'diy' ? '#dcfce7' : '#ede9fe',
+              color: !user || user.tier === 'free' ? '#6b7280' : user.tier === 'diy' ? '#15803d' : '#6d28d9'
+            }}>{(user?.tier || 'free').toUpperCase()}</span>
           </p>
         </div>
         {view === 'result' && (
