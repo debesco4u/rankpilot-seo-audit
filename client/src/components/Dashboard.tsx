@@ -6,7 +6,7 @@ import ScoreCircle from './ScoreCircle';
 import type { User, SiteAudit, Tier } from '../types';
 
 interface Props {
-  user: User | null;
+  user: User;
 }
 
 export default function Dashboard({ user }: Props) {

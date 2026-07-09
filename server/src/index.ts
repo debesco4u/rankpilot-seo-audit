@@ -10,8 +10,6 @@ const PORT = parseInt(process.env.PORT || '3001');
 
 app.use(cors());
 app.use(express.json());
-
-// Auth routes
 app.use('/api/auth', authRouter);
 
 // Subscribe
@@ -25,55 +23,63 @@ app.post('/api/subscribe', authMiddleware, (req, res) => {
   res.json(user);
 });
 
-// Helper: extract userId and tier from auth header (returns null if not authenticated)
-function extractAuth(req: express.Request): { userId: number | null; userTier: string } {
-  const authHeader = req.headers.authorization;
-  if (authHeader?.startsWith('Bearer ')) {
-    try {
-      const jwt = require('jsonwebtoken');
-      const decoded = jwt.verify(authHeader.slice(7), process.env.JWT_SECRET || 'dev-secret') as any;
-      const userId = decoded.id;
-      const u = db.prepare('SELECT tier FROM users WHERE id=?').get(userId) as any;
-      if (u) return { userId, userTier: u.tier };
-    } catch {}
-  }
-  return { userId: null, userTier: 'free' };
-}
-
-// Audit — works with or without auth
-app.post('/api/audit', async (req, res) => {
+// Audit — requires login, enforces free tier limit
+app.post('/api/audit', authMiddleware, async (req, res) => {
   try {
     const { url } = req.body;
     if (!url) return res.status(400).json({ error: 'URL required' });
 
-    const { userId, userTier } = extractAuth(req);
+    const userId = (req as any).userId;
+    const user = db.prepare('SELECT tier FROM users WHERE id = ?').get(userId) as any;
+    const tier = user?.tier || 'free';
 
-    // Rate limit for free tier
-    if (userTier === 'free') {
+    // Free tier: 5 audits per day
+    if (tier === 'free') {
       const today = new Date().toISOString().split('T')[0];
-      const limitKey = userId ? String(userId) : ('ip_' + (req.ip || 'unknown'));
-      const count = db.prepare('SELECT count FROM audit_counts WHERE user_id = ? AND date = ?').get(limitKey, today) as any;
-      if (count && count.count >= 5) {
-        return res.status(429).json({ error: 'Free tier limit: 5 audits per day. Upgrade for unlimited.' });
+      const row = db.prepare('SELECT count FROM audit_counts WHERE user_id = ? AND date = ?').get(String(userId), today) as any;
+      const used = row ? row.count : 0;
+      if (used >= 5) {
+        return res.status(429).json({
+          error: 'You have used all 5 free audits for today. Upgrade to DIY SEO or White Label for unlimited audits.',
+          remaining: 0,
+        });
       }
-      db.prepare('INSERT INTO audit_counts (user_id, date, count) VALUES (?, ?, 1) ON CONFLICT(user_id, date) DO UPDATE SET count = count + 1').run(limitKey, today);
+      db.prepare('INSERT INTO audit_counts (user_id, date, count) VALUES (?, ?, 1) ON CONFLICT(user_id, date) DO UPDATE SET count = count + 1')
+        .run(String(userId), today);
     }
 
     const result = await auditSite(url);
 
-    // Save to history only if logged in
-    if (userId) {
-      db.prepare('INSERT INTO audits (user_id, domain, data, score, pages) VALUES (?, ?, ?, ?, ?)')
-        .run(userId, result.domain, JSON.stringify(result), result.overallScore, result.pages.length);
+    // Save to history
+    db.prepare('INSERT INTO audits (user_id, domain, data, score, pages) VALUES (?, ?, ?, ?, ?)')
+      .run(userId, result.domain, JSON.stringify(result), result.overallScore, result.pages.length);
+
+    // Return remaining for free tier
+    let remaining: number | null = null;
+    if (tier === 'free') {
+      const today = new Date().toISOString().split('T')[0];
+      const row = db.prepare('SELECT count FROM audit_counts WHERE user_id = ? AND date = ?').get(String(userId), today) as any;
+      remaining = Math.max(0, 5 - (row ? row.count : 0));
     }
 
-    res.json(result);
+    res.json({ ...result, remaining });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Audit history (requires auth)
+// Check remaining audits
+app.get('/api/audit/remaining', authMiddleware, (req, res) => {
+  const userId = (req as any).userId;
+  const user = db.prepare('SELECT tier FROM users WHERE id = ?').get(userId) as any;
+  const tier = user?.tier || 'free';
+  if (tier !== 'free') return res.json({ remaining: null, tier });
+  const today = new Date().toISOString().split('T')[0];
+  const row = db.prepare('SELECT count FROM audit_counts WHERE user_id = ? AND date = ?').get(String(userId), today) as any;
+  res.json({ remaining: Math.max(0, 5 - (row ? row.count : 0)), tier });
+});
+
+// Audit history
 app.get('/api/history', authMiddleware, (req, res) => {
   const audits = db.prepare(
     'SELECT id, domain, score, pages, created_at as timestamp FROM audits WHERE user_id = ? ORDER BY created_at DESC LIMIT 50'
@@ -89,25 +95,21 @@ app.get('/api/history/:id', authMiddleware, (req, res) => {
   res.json(JSON.parse(audit.data));
 });
 
-// PDF endpoint (requires auth + paid tier)
+// PDF (paid tiers only)
 app.get('/api/pdf/:domain', authMiddleware, (req, res) => {
   const uid = (req as any).userId;
   const user = db.prepare('SELECT tier FROM users WHERE id = ?').get(uid) as any;
   if (!user || user.tier === 'free') return res.status(403).json({ error: 'PDF download requires DIY SEO or White Label plan' });
-
   const audit = db.prepare(
     'SELECT data FROM audits WHERE user_id = ? AND domain LIKE ? ORDER BY created_at DESC LIMIT 1'
   ).get(uid, `%${req.params.domain}%`) as any;
-  if (!audit) return res.status(404).json({ error: 'No audit found for this domain' });
-
+  if (!audit) return res.status(404).json({ error: 'No audit found' });
   res.json(JSON.parse(audit.data));
 });
 
-// Serve static client files
+// Static files
 const clientDist = path.join(__dirname, '../../client/dist');
 app.use(express.static(clientDist));
-
-// SPA fallback
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) return res.status(404).json({ error: 'Not found' });
   res.sendFile(path.join(clientDist, 'index.html'));

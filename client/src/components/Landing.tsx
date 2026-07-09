@@ -6,15 +6,22 @@ interface Props {
   user: User | null;
   onLoginClick: () => void;
   onSelectTier: (tier: Tier) => void;
+  showLoginPrompt?: boolean;
 }
 
-export default function Landing({ user, onLoginClick, onSelectTier }: Props) {
+export default function Landing({ user, onLoginClick, onSelectTier, showLoginPrompt }: Props) {
   const navigate = useNavigate();
   const [url, setUrl] = useState('');
+
+  // Auto-show login when redirected from /audit without auth
+  React.useEffect(() => {
+    if (showLoginPrompt && !user) onLoginClick();
+  }, [showLoginPrompt]);
 
   const handleAudit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) return;
+    if (!user) { onLoginClick(); return; }
     const encoded = encodeURIComponent(url.trim().replace(/^https?:\/\//, '').replace(/\/$/, ''));
     navigate(`/audit?url=${encoded}`);
   };

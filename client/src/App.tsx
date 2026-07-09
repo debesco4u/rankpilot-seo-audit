@@ -65,7 +65,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Landing user={user} onLoginClick={() => setShowAuth(true)} onSelectTier={handleSelectTier} />} />
           <Route path="/dashboard" element={user ? <Dashboard user={user} /> : <Landing user={user} onLoginClick={() => setShowAuth(true)} onSelectTier={handleSelectTier} />} />
-          <Route path="/audit" element={<Dashboard user={user} />} />
+          <Route path="/audit" element={user ? <Dashboard user={user} /> : <Landing user={user} onLoginClick={() => setShowAuth(true)} onSelectTier={handleSelectTier} showLoginPrompt={true} />} />
           <Route path="/account" element={user ? <AccountPage user={user} onSelectTier={handleSelectTier} /> : <Landing user={user} onLoginClick={() => setShowAuth(true)} onSelectTier={handleSelectTier} />} />
         </Routes>
       </div>
