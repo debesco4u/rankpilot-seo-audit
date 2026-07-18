@@ -37,7 +37,7 @@ function extractInternalLinks(html: string, baseUrl: string): string[] {
 function analyzePage(html: string, url: string, baseUrl: string): any {
   const $ = cheerio.load(html);
   const base = extractBaseUrl(baseUrl);
-  const h1Text: string[] = []; $('h1').each((_, el) => h1Text.push($(el).text().trim()));
+  const h1Text: string[] = []; $('h1').each((_, el) => { h1Text.push($(el).text().trim()); });
   const h2Count = $('h2').length;
   const h3Count = $('h3').length;
   let imageCount = 0, imagesWithoutAlt = 0;
