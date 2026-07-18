@@ -1,159 +1,199 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
-import AuditForm from './AuditForm';
-import AuditHistory from './AuditHistory';
-import ScoreCircle from './ScoreCircle';
-import type { User, SiteAudit, Tier } from '../types';
+import React, { useState } from 'react';
+import { AlertTriangle, CheckCircle, XCircle, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { AuditResult, User, Issue } from '../types';
+import { ScoreCircle } from './ScoreCircle';
 
-interface Props {
-  user: User;
+interface DashboardProps {
+  result: AuditResult | null;
+  user: User | null;
 }
 
-export default function Dashboard({ user }: Props) {
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const initialUrl = searchParams.get('url') || (location.state as any)?.url || '';
-  const [audit, setAudit] = useState<SiteAudit | null>(null);
-  const [history, setHistory] = useState<any[]>([]);
-  const [view, setView] = useState<'form' | 'result'>('form');
+const sevColor = (s: string) => s === 'high' ? 'text-error' : s === 'medium' ? 'text-warning' : 'text-success';
+const sevBg = (s: string) => s === 'high' ? 'bg-error/10' : s === 'medium' ? 'bg-warning/10' : 'bg-success/10';
+const sevLabel = (s: string) => s === 'high' ? 'CRITICAL' : s === 'medium' ? 'WARNING' : 'MINOR';
 
-  useEffect(() => {
-    loadHistory();
-  }, []);
+export const Dashboard: React.FC<DashboardProps> = ({ result, user }) => {
+  const [expandedPage, setExpandedPage] = useState<string | null>(null);
 
-  const loadHistory = async () => {
-    try {
-      const token = localStorage.getItem('rp_token');
-      const res = await fetch('/api/history', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setHistory(data);
-      }
-    } catch {}
-  };
+  if (!result) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <p className="text-lg text-base-content/60">No audit results yet.</p>
+          <p className="text-sm text-base-content/40">Run an audit to see your dashboard.</p>
+        </div>
+      </div>
+    );
+  }
 
-  const handleResult = (data: SiteAudit) => {
-    setAudit(data);
-    setView('result');
-    loadHistory();
-  };
-
-  const handleSelectAudit = async (id: string) => {
-    try {
-      const token = localStorage.getItem('rp_token');
-      const res = await fetch(`/api/history/${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAudit(data);
-        setView('result');
-      }
-    } catch {}
-  };
-
-  const handleDownloadPdf = () => {
-    if (!audit) return;
-    const token = localStorage.getItem('rp_token');
-    window.open(`/api/pdf/${encodeURIComponent(audit.domain)}?token=${token}`, '_blank');
-  };
-
-  const scoreColor = (s: number) => s >= 80 ? '#22c55e' : s >= 50 ? '#eab308' : '#ef4444';
-  const isPaid = user ? user.tier !== 'free' : false;
+  const isPaid = user && (user.plan === 'diy' || user.plan === 'whitelabel');
+  const highIssues = result.issues.filter(i => i.severity === 'high');
+  const medIssues = result.issues.filter(i => i.severity === 'medium');
+  const lowIssues = result.issues.filter(i => i.severity === 'low');
 
   return (
-    <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+    <div className="max-w-5xl mx-auto p-4 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h1 style={{ margin: 0, fontSize: 28 }}>Dashboard</h1>
-          <p style={{ margin: '4px 0 0', color: '#6b7280', fontSize: 14 }}>
-            Welcome back, {user?.name || 'Guest'} · <span style={{
-              padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600,
-              background: !user || user.tier === 'free' ? '#f3f4f6' : user.tier === 'diy' ? '#dcfce7' : '#ede9fe',
-              color: !user || user.tier === 'free' ? '#6b7280' : user.tier === 'diy' ? '#15803d' : '#6d28d9'
-            }}>{(user?.tier || 'free').toUpperCase()}</span>
-          </p>
+          <h2 className="text-2xl font-bold text-base-content">Audit Results</h2>
+          <p className="text-sm text-base-content/60 break-url">{result.siteUrl}</p>
+          <p className="text-xs text-base-content/40">{result.auditDate} &bull; {result.pages.length} pages audited</p>
         </div>
-        {view === 'result' && (
-          <button onClick={() => { setView('form'); setAudit(null); }} style={{
-            padding: '10px 20px', borderRadius: 8, border: '1px solid #d1d5db',
-            background: '#fff', cursor: 'pointer', fontWeight: 500
-          }}>← New Audit</button>
-        )}
+        <ScoreCircle score={result.overallScore} size={120} strokeWidth={10} label="Overall Score" />
       </div>
 
-      {view === 'form' ? (
-        <>
-          <AuditForm user={user} initialUrl={initialUrl} onResult={handleResult} />
-          <div style={{ marginTop: 40 }}>
-            <AuditHistory audits={history} onSelect={handleSelectAudit} />
-          </div>
-        </>
-      ) : audit ? (
-        <div>
-          {/* Overall Score */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 32, padding: 32,
-            background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb', marginBottom: 24
-          }}>
-            <ScoreCircle score={audit.overallScore} size={140} label="Overall SEO Score" />
-            <div>
-              <h2 style={{ margin: '0 0 8px', wordBreak: 'break-all' as const, overflowWrap: 'anywhere' as const }}>{audit.domain}</h2>
-              <p style={{ margin: 0, color: '#6b7280' }}>{audit.pages.length} pages crawled · {new Date(audit.timestamp).toLocaleString()}</p>
-              {isPaid && (
-                <button onClick={handleDownloadPdf} style={{
-                  marginTop: 16, padding: '10px 24px', borderRadius: 8, border: 'none',
-                  background: '#16a34a', color: '#fff', fontWeight: 600, cursor: 'pointer'
-                }}>📄 Download PDF Report</button>
-              )}
+      {/* Issue Summary */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { count: highIssues.length, label: 'Critical', color: 'text-error', bg: 'bg-error/10', border: 'border-error/30' },
+          { count: medIssues.length, label: 'Warnings', color: 'text-warning', bg: 'bg-warning/10', border: 'border-warning/30' },
+          { count: lowIssues.length, label: 'Minor', color: 'text-success', bg: 'bg-success/10', border: 'border-success/30' },
+        ].map((s, i) => (
+          <div key={i} className={`card ${s.bg} border ${s.border}`}>
+            <div className="card-body p-3 items-center text-center">
+              <span className={`text-2xl font-bold ${s.color}`}>{s.count}</span>
+              <span className={`text-xs ${s.color}`}>{s.label}</span>
             </div>
           </div>
+        ))}
+      </div>
 
-          {/* Page Cards */}
-          <h3>Page-by-Page Results</h3>
-          {audit.pages.map((page, i) => (
-            <div key={i} style={{
-              border: '1px solid #e5e7eb', borderRadius: 12, padding: 20,
-              marginBottom: 16, background: '#fff'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 15, wordBreak: 'break-word' as const, overflowWrap: 'anywhere' as const }}>{page.title || page.url}</div>
-                  <div style={{ fontSize: 13, color: '#6b7280', wordBreak: 'break-all' as const, overflowWrap: 'anywhere' as const }}>{page.url}</div>
+      {/* Category Scores */}
+      <div className="card bg-base-200">
+        <div className="card-body p-4">
+          <h3 className="font-bold text-base-content mb-3">Category Scores</h3>
+          <div className="space-y-3">
+            {result.categoryScores.map(cat => {
+              const pct = Math.round(cat.score / cat.maxScore * 100);
+              const color = pct >= 80 ? 'progress-success' : pct >= 60 ? 'progress-warning' : 'progress-error';
+              return (
+                <div key={cat.category}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-base-content">{cat.label}</span>
+                    <span className="text-base-content/60">{cat.score}/{cat.maxScore} ({cat.issueCount} issues)</span>
+                  </div>
+                  <progress className={`progress ${color} w-full`} value={pct} max="100" />
                 </div>
-                <div style={{
-                  fontSize: 24, fontWeight: 800,
-                  color: scoreColor(page.score)
-                }}>{page.score}</div>
-              </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
-              {/* Issues */}
-              {page.issues.slice(0, isPaid ? undefined : 3).map((issue, j) => (
-                <div key={j} style={{
-                  padding: '8px 12px', marginBottom: 6, borderRadius: 6,
-                  background: issue.type === 'critical' ? '#fef2f2' : issue.type === 'warning' ? '#fffbeb' : '#f0fdf4',
-                  borderLeft: `3px solid ${issue.type === 'critical' ? '#ef4444' : issue.type === 'warning' ? '#eab308' : '#22c55e'}`,
-                  fontSize: 13
-                }}>
-                  <div>{issue.message}</div>
-                  {isPaid && issue.fix && (
-                    <div style={{ marginTop: 4, color: '#15803d', fontWeight: 500 }}>
-                      Fix: {issue.fix}
+      {/* Technical Checks */}
+      <div className="card bg-base-200">
+        <div className="card-body p-4">
+          <h3 className="font-bold text-base-content mb-3">Technical SEO</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {[
+              { label: 'HTTPS', pass: result.technicalChecks.isHttps },
+              { label: 'robots.txt', pass: result.technicalChecks.hasRobotsTxt },
+              { label: 'Sitemap', pass: result.technicalChecks.hasSitemap },
+              { label: 'Indexed', pass: result.technicalChecks.googleIndexed },
+            ].map(t => (
+              <div key={t.label} className={`flex items-center gap-2 p-2 rounded ${t.pass ? 'bg-success/10' : 'bg-error/10'}`}>
+                {t.pass ? <CheckCircle size={16} className="text-success" /> : <XCircle size={16} className="text-error" />}
+                <span className="text-sm">{t.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Issues List */}
+      <div className="card bg-base-200">
+        <div className="card-body p-4">
+          <h3 className="font-bold text-base-content mb-3">All Issues ({result.issues.length})</h3>
+          <div className="space-y-2">
+            {result.issues.sort((a, b) => {
+              const order = { high: 0, medium: 1, low: 2 };
+              return (order[a.severity] || 0) - (order[b.severity] || 0);
+            }).map((issue, idx) => (
+              <div key={idx} className={`p-3 rounded-lg ${sevBg(issue.severity)} border border-base-300`}>
+                <div className="flex items-start gap-2">
+                  <span className={`badge badge-sm ${issue.severity === 'high' ? 'badge-error' : issue.severity === 'medium' ? 'badge-warning' : 'badge-success'} text-white`}>
+                    {sevLabel(issue.severity)}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className={`font-medium text-sm ${sevColor(issue.severity)}`}>{issue.title}</p>
+                    <p className="text-xs text-base-content/60 mt-1">{issue.description}</p>
+                    {issue.page && <p className="text-xs text-base-content/40 break-url mt-1">{issue.page}</p>}
+                    {isPaid && issue.recommendation && (
+                      <div className="mt-2 p-2 bg-success/10 border border-success/30 rounded text-xs text-success">
+                        <strong>Fix:</strong> {issue.recommendation}
+                      </div>
+                    )}
+                    {!isPaid && (
+                      <p className="text-xs text-base-content/40 italic mt-1">Upgrade for fix recommendations</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Page-by-Page */}
+      <div className="card bg-base-200">
+        <div className="card-body p-4">
+          <h3 className="font-bold text-base-content mb-3">Page Analysis ({result.pages.length} pages)</h3>
+          <div className="space-y-2">
+            {result.pages.map(page => {
+              const pageIssues = result.issues.filter(i => i.page === page.url);
+              const hasHigh = pageIssues.some(i => i.severity === 'high');
+              const hasMed = pageIssues.some(i => i.severity === 'medium');
+              const statusColor = hasHigh ? 'border-error/50' : hasMed ? 'border-warning/50' : 'border-success/50';
+              const expanded = expandedPage === page.url;
+              return (
+                <div key={page.url} className={`border ${statusColor} rounded-lg overflow-hidden`}>
+                  <button
+                    className="w-full p-3 flex items-center justify-between hover:bg-base-300/50"
+                    onClick={() => setExpandedPage(expanded ? null : page.url)}
+                  >
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="font-medium text-sm text-base-content truncate">{page.title}</p>
+                      <p className="text-xs text-base-content/40 break-url">{page.url}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-base-content/60">{pageIssues.length} issues</span>
+                      {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </div>
+                  </button>
+                  {expanded && (
+                    <div className="p-3 border-t border-base-300 bg-base-100 space-y-2">
+                      <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-center text-xs">
+                        <div><span className="text-base-content/40">Words</span><br /><strong>{page.wordCount}</strong></div>
+                        <div><span className="text-base-content/40">H1s</span><br /><strong>{page.h1Count}</strong></div>
+                        <div><span className="text-base-content/40">H2s</span><br /><strong>{page.h2Count}</strong></div>
+                        <div><span className="text-base-content/40">Images</span><br /><strong>{page.imageCount}</strong></div>
+                        <div><span className="text-base-content/40">Int Links</span><br /><strong>{page.internalLinks}</strong></div>
+                        <div><span className="text-base-content/40">Ext Links</span><br /><strong>{page.externalLinks}</strong></div>
+                      </div>
+                      {pageIssues.length > 0 && (
+                        <div className="space-y-1 mt-2">
+                          {pageIssues.map((issue, i) => (
+                            <div key={i} className={`text-xs p-2 rounded ${sevBg(issue.severity)}`}>
+                              <span className={`font-medium ${sevColor(issue.severity)}`}>[{sevLabel(issue.severity)}]</span> {issue.title}: {issue.description}
+                              {isPaid && issue.recommendation && (
+                                <div className="mt-1 text-success"><strong>Fix:</strong> {issue.recommendation}</div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {pageIssues.length === 0 && (
+                        <p className="text-xs text-success">✅ No issues found on this page!</p>
+                      )}
                     </div>
                   )}
                 </div>
-              ))}
-              {!isPaid && page.issues.length > 3 && (
-                <div style={{ textAlign: 'center', padding: 8, color: '#6b7280', fontSize: 13 }}>
-                  🔒 {page.issues.length - 3} more issues — upgrade to see all
-                </div>
-              )}
-            </div>
-          ))}
+              );
+            })}
+          </div>
         </div>
-      ) : null}
+      </div>
     </div>
   );
-}
+};

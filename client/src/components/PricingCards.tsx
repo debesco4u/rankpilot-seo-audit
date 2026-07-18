@@ -1,69 +1,110 @@
-import React from 'react';
-import type { Tier } from '../types';
+import React, { useState } from 'react';
 
 interface Props {
-  currentTier?: Tier;
-  onSelect: (tier: Tier) => void;
+  token: string;
+  currentPlan: string;
+  onPlanChange: (plan: string) => void;
 }
 
 const plans = [
   {
-    tier: 'free' as Tier, name: 'Free', price: '$0', period: 'forever',
-    features: ['General SEO audit', '5 searches per day', 'Basic issue detection', 'Overall score'],
-    cta: 'Get Started'
+    id: 'free',
+    name: 'Free',
+    price: '$0',
+    period: '/month',
+    features: ['General SEO audit', '5 audits per day', 'Basic recommendations', 'Score overview'],
+    cta: 'Current Plan',
   },
   {
-    tier: 'diy' as Tier, name: 'DIY SEO', price: '$15', period: '/month',
-    features: ['Full multi-page crawl', 'Unlimited audits', 'Detailed fix recommendations', 'Keyword strategy', '90-day action plan', 'Priority support'],
-    cta: 'Start DIY SEO', popular: true
+    id: 'diy',
+    name: 'DIY SEO',
+    price: '$15',
+    period: '/month',
+    features: ['Advanced SEO audit', 'Unlimited audits', 'Detailed fix recommendations', 'Page-by-page analysis', 'Keyword strategy', '90-day action plan'],
+    cta: 'Upgrade Now',
+    popular: true,
   },
   {
-    tier: 'whitelabel' as Tier, name: 'White Label', price: '$20', period: '/month',
-    features: ['Everything in DIY SEO', 'Professional PDF report', 'Remove Dabisoft branding', 'Client-ready exports', 'Custom report branding', 'Bulk audits'],
-    cta: 'Go White Label'
+    id: 'whitelabel',
+    name: 'White Label',
+    price: '$20',
+    period: '/month',
+    features: ['Everything in DIY SEO', 'Detailed PDF download', 'Remove Dabisoft branding', 'Custom branding support', 'Priority support', 'Client-ready reports'],
+    cta: 'Upgrade Now',
   },
 ];
 
-export default function PricingCards({ currentTier, onSelect }: Props) {
+export const PricingCards: React.FC<Props> = ({ token, currentPlan, onPlanChange }) => {
+  const [processing, setProcessing] = useState<string | null>(null);
+
+  const handleUpgrade = async (planId: string) => {
+    if (planId === 'free' || planId === currentPlan) return;
+    setProcessing(planId);
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ plan: planId }),
+      });
+      const data = await res.json();
+      if (data.approvalUrl) {
+        window.location.href = data.approvalUrl;
+      } else if (data.success) {
+        onPlanChange(planId);
+      }
+    } catch (e) {
+      alert('Payment error. Please try again.');
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24, maxWidth: 900, margin: '0 auto' }}>
-      {plans.map(p => {
-        const isCurrent = currentTier === p.tier;
-        return (
-          <div key={p.tier} style={{
-            background: '#fff', borderRadius: 16, padding: 32,
-            border: p.popular ? '2px solid #16a34a' : '1px solid #e5e7eb',
-            position: 'relative', textAlign: 'center',
-            boxShadow: p.popular ? '0 8px 30px rgba(22,163,74,0.15)' : 'none'
-          }}>
-            {p.popular && (
-              <div style={{
-                position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)',
-                background: '#16a34a', color: '#fff', padding: '4px 16px', borderRadius: 20,
-                fontSize: 12, fontWeight: 700
-              }}>MOST POPULAR</div>
+    <div className="py-8">
+      <h2 className="text-2xl font-bold text-center mb-2">Choose Your Plan</h2>
+      <p className="text-center text-gray-600 mb-8">Unlock advanced SEO features to boost your rankings</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        {plans.map(plan => (
+          <div
+            key={plan.id}
+            className={`relative rounded-xl border-2 p-6 bg-white transition-shadow hover:shadow-lg ${
+              plan.popular ? 'border-green-500 shadow-md' : 'border-gray-200'
+            } ${currentPlan === plan.id ? 'ring-2 ring-green-500' : ''}`}
+          >
+            {plan.popular && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                MOST POPULAR
+              </div>
             )}
-            <h3 style={{ margin: '8px 0 4px', fontSize: 22, color: '#111' }}>{p.name}</h3>
-            <div style={{ margin: '12px 0 20px' }}>
-              <span style={{ fontSize: 40, fontWeight: 800, color: '#111' }}>{p.price}</span>
-              <span style={{ color: '#6b7280', fontSize: 15 }}>{p.period}</span>
+            <h3 className="text-lg font-bold mt-2">{plan.name}</h3>
+            <div className="mt-2 mb-4">
+              <span className="text-3xl font-bold">{plan.price}</span>
+              <span className="text-gray-500 text-sm">{plan.period}</span>
             </div>
-            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', textAlign: 'left' }}>
-              {p.features.map((f, i) => (
-                <li key={i} style={{ padding: '6px 0', fontSize: 14, color: '#374151', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ color: '#16a34a', fontWeight: 700 }}>✓</span> {f}
+            <ul className="space-y-2 mb-6">
+              {plan.features.map((f, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <span className="text-green-500 mt-0.5">✓</span>
+                  <span>{f}</span>
                 </li>
               ))}
             </ul>
-            <button onClick={() => onSelect(p.tier)} disabled={isCurrent} style={{
-              width: '100%', padding: 14, borderRadius: 10, border: 'none',
-              background: isCurrent ? '#d1d5db' : p.popular ? '#16a34a' : '#f0fdf4',
-              color: isCurrent ? '#9ca3af' : p.popular ? '#fff' : '#16a34a',
-              fontWeight: 700, fontSize: 15, cursor: isCurrent ? 'default' : 'pointer'
-            }}>{isCurrent ? 'Current Plan' : p.cta}</button>
+            <button
+              onClick={() => handleUpgrade(plan.id)}
+              disabled={currentPlan === plan.id || processing === plan.id}
+              className={`w-full py-2 rounded-lg font-semibold text-sm transition ${
+                currentPlan === plan.id
+                  ? 'bg-gray-100 text-gray-500 cursor-default'
+                  : plan.popular
+                  ? 'bg-green-500 text-white hover:bg-green-600'
+                  : 'bg-gray-900 text-white hover:bg-gray-800'
+              }`}
+            >
+              {processing === plan.id ? 'Processing...' : currentPlan === plan.id ? '✓ Current Plan' : plan.cta}
+            </button>
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
-}
+};

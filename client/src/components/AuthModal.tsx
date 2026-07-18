@@ -1,88 +1,128 @@
 import React, { useState } from 'react';
-import { User } from '../types';
-import { api } from '../api';
+import { X, Loader2, Mail, Lock, User as UserIcon, AlertCircle, CheckCircle } from 'lucide-react';
+import { User, SUPPORT_EMAIL } from '../types';
+import { apiSignup, apiLogin, apiForgotPassword } from '../api';
 
-interface Props {
-  onAuth: (user: User, token: string) => void;
+interface AuthModalProps {
+  mode: 'login' | 'signup';
   onClose: () => void;
+  onLogin: (user: User) => void;
+  onToggleMode: () => void;
 }
 
-export default function AuthModal({ onAuth, onClose }: Props) {
-  const [mode, setMode] = useState<'login' | 'register' | 'forgot' | 'reset'>('login');
+export const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, onLogin, onToggleMode }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [resetToken, setResetToken] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [error, setError] = useState('');
-  const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [showForgot, setShowForgot] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(''); setMsg(''); setLoading(true);
+    setError(''); setSuccess(''); setLoading(true);
     try {
-      if (mode === 'login') {
-        const data = await api.login(email, password);
-        localStorage.setItem('token', data.token);
-        onAuth(data.user, data.token);
-      } else if (mode === 'register') {
-        const data = await api.register(email, password, name);
-        localStorage.setItem('token', data.token);
-        setMsg('Account created successfully! Redirecting...');
-        setTimeout(() => onAuth(data.user, data.token), 1200);
+      if (showForgot) {
+        const data = await apiForgotPassword(email);
+        setSuccess(data.message || 'Reset link sent!');
         setLoading(false);
         return;
-      } else if (mode === 'forgot') {
-        const data = await api.forgotPassword(email);
-        setMsg(data.message || 'A reset token has been sent to your email. Check your inbox and paste it below.');
-        setMode('reset');
-        setLoading(false);
-        return;
-      } else if (mode === 'reset') {
-        await api.resetPassword(resetToken, newPassword);
-        setMsg('Password reset! You can now log in.');
-        setMode('login');
       }
-    } catch (err: any) { setError(err.message); }
+      if (mode === 'signup') {
+        const data = await apiSignup(email, password, name);
+        setSuccess(data.message || 'Account created!');
+        setTimeout(() => onLogin(data.user), 1000);
+      } else {
+        const data = await apiLogin(email, password);
+        onLogin(data.user);
+      }
+    } catch (err: any) {
+      setError(err.message);
+    }
     setLoading(false);
   };
 
-  const overlay: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
-  const modal: React.CSSProperties = { background: '#fff', borderRadius: 12, padding: 32, width: '100%', maxWidth: 400, position: 'relative', boxSizing: 'border-box' };
-  const input: React.CSSProperties = { width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, marginBottom: 12, boxSizing: 'border-box' };
-  const btn: React.CSSProperties = { width: '100%', padding: '12px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 16, fontWeight: 600, cursor: 'pointer' };
-  const link: React.CSSProperties = { color: '#16a34a', cursor: 'pointer', background: 'none', border: 'none', fontSize: 14, textDecoration: 'underline' };
-
   return (
-    <div style={overlay} onClick={onClose}>
-      <div style={modal} onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>×</button>
-        <h2 style={{ margin: '0 0 20px', textAlign: 'center' }}>
-          {mode === 'login' ? 'Sign In' : mode === 'register' ? 'Create Account' : mode === 'forgot' ? 'Forgot Password' : 'Reset Password'}
-        </h2>
-        {error && <div style={{ color: '#dc2626', marginBottom: 12, fontSize: 14, textAlign: 'center' }}>{error}</div>}
-        {msg && <div style={{ color: '#16a34a', marginBottom: 12, fontSize: 14, textAlign: 'center' }}>{msg}</div>}
-        <form onSubmit={handleSubmit}>
-          {mode === 'register' && <input style={input} placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} required />}
-          {(mode === 'login' || mode === 'register' || mode === 'forgot') && <input style={input} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />}
-          {(mode === 'login' || mode === 'register') && <input style={input} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />}
-          {mode === 'reset' && <>
-            <input style={input} placeholder="Reset Token" value={resetToken} onChange={e => setResetToken(e.target.value)} required />
-            <input style={input} type="password" placeholder="New Password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
-          </>}
-          <button style={btn} type="submit" disabled={loading}>{loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : mode === 'register' ? 'Create Account' : mode === 'forgot' ? 'Send Reset Link' : 'Reset Password'}</button>
+    <div className="modal modal-open" onClick={onClose}>
+      <div className="modal-box relative max-w-sm" onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"><X size={16} /></button>
+
+        <h3 className="font-bold text-lg text-center mb-4">
+          {showForgot ? 'Reset Password' : mode === 'login' ? 'Log In' : 'Create Account'}
+        </h3>
+
+        {error && (
+          <div className="alert alert-error mb-4 py-2 text-sm">
+            <AlertCircle size={16} /> <span>{error}</span>
+          </div>
+        )}
+
+        {success && (
+          <div className="alert alert-success mb-4 py-2 text-sm">
+            <CheckCircle size={16} /> <span>{success}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          {mode === 'signup' && !showForgot && (
+            <div className="form-control">
+              <label className="label py-1"><span className="label-text text-sm">Name</span></label>
+              <div className="input input-bordered input-sm flex items-center gap-2">
+                <UserIcon size={14} className="opacity-50" />
+                <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" className="grow bg-transparent outline-none" required />
+              </div>
+            </div>
+          )}
+
+          <div className="form-control">
+            <label className="label py-1"><span className="label-text text-sm">Email</span></label>
+            <div className="input input-bordered input-sm flex items-center gap-2">
+              <Mail size={14} className="opacity-50" />
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@example.com" className="grow bg-transparent outline-none" required />
+            </div>
+          </div>
+
+          {!showForgot && (
+            <div className="form-control">
+              <label className="label py-1"><span className="label-text text-sm">Password</span></label>
+              <div className="input input-bordered input-sm flex items-center gap-2">
+                <Lock size={14} className="opacity-50" />
+                <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="grow bg-transparent outline-none" required minLength={6} />
+              </div>
+            </div>
+          )}
+
+          <button type="submit" className="btn btn-primary btn-sm w-full text-white" disabled={loading}>
+            {loading ? <Loader2 size={16} className="animate-spin" /> : showForgot ? 'Send Reset Link' : mode === 'login' ? 'Log In' : 'Sign Up'}
+          </button>
         </form>
-        <div style={{ marginTop: 16, textAlign: 'center' }}>
-          {mode === 'login' && <>
-            <button style={link} onClick={() => setMode('forgot')}>Forgot password?</button>
-            <span style={{ margin: '0 8px', color: '#9ca3af' }}>|</span>
-            <button style={link} onClick={() => setMode('register')}>Create account</button>
-          </>}
-          {mode === 'register' && <button style={link} onClick={() => setMode('login')}>Already have an account? Sign in</button>}
-          {(mode === 'forgot' || mode === 'reset') && <button style={link} onClick={() => setMode('login')}>Back to sign in</button>}
+
+        <div className="text-center mt-4 space-y-2">
+          {!showForgot && mode === 'login' && (
+            <button onClick={() => { setShowForgot(true); setError(''); setSuccess(''); }} className="text-xs text-primary hover:underline">
+              Forgot password?
+            </button>
+          )}
+
+          {showForgot ? (
+            <button onClick={() => { setShowForgot(false); setError(''); setSuccess(''); }} className="text-xs text-primary hover:underline">
+              Back to login
+            </button>
+          ) : (
+            <p className="text-xs text-base-content/60">
+              {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+              <button onClick={onToggleMode} className="text-primary hover:underline">
+                {mode === 'login' ? 'Sign up' : 'Log in'}
+              </button>
+            </p>
+          )}
+
+          <p className="text-xs text-base-content/40">
+            Need help? <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary hover:underline">{SUPPORT_EMAIL}</a>
+          </p>
         </div>
       </div>
     </div>
   );
-}
+};

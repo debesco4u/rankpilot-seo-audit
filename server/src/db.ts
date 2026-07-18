@@ -1,46 +1,52 @@
 import Database from 'better-sqlite3';
 import path from 'path';
-import fs from 'fs';
 
-const dataDir = path.join(process.cwd(), 'data');
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-
-const db = new Database(path.join(dataDir, 'seo-audit-tool.db'));
+const dbPath = process.env.DB_PATH || path.join(__dirname, '..', 'seo_audit.db');
+const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
+export function initDB(): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      name TEXT NOT NULL,
+      plan TEXT NOT NULL DEFAULT 'free',
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.exec(`CREATE TABLE IF NOT EXISTS audits (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    name TEXT NOT NULL,
-    tier TEXT DEFAULT 'free',
-    reset_token TEXT,
-    created_at TEXT DEFAULT (datetime('now'))
-  );
-  CREATE TABLE IF NOT EXISTS audits (
+    user_id INTEGER NOT NULL, site_url TEXT NOT NULL,
+    overall_score INTEGER NOT NULL, data_json TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS daily_usage (
+    user_id INTEGER NOT NULL, date TEXT NOT NULL,
+    count INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (user_id, date)
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS payments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT NOT NULL,
-    domain TEXT NOT NULL,
-    data TEXT NOT NULL,
-    score INTEGER NOT NULL,
-    pages INTEGER NOT NULL,
-    created_at TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  );
-  CREATE TABLE IF NOT EXISTS audit_counts (
-    user_id TEXT NOT NULL,
-    date TEXT NOT NULL,
-    count INTEGER DEFAULT 0,
-    PRIMARY KEY (user_id, date)
-  );
-`);
-
-// Migrate: add reset_token if missing (for existing DBs)
-try {
-  db.prepare("SELECT reset_token FROM users LIMIT 0").run();
-} catch {
-  db.exec("ALTER TABLE users ADD COLUMN reset_token TEXT");
+    user_id INTEGER NOT NULL, plan TEXT NOT NULL,
+    amount REAL NOT NULL, currency TEXT NOT NULL DEFAULT 'USD',
+    payment_method TEXT NOT NULL DEFAULT 'paypal',
+    txn_ref TEXT, status TEXT NOT NULL DEFAULT 'confirmed',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER UNIQUE NOT NULL, plan TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active',
+    started_at TEXT NOT NULL DEFAULT (datetime('now')),
+    expires_at TEXT, payment_id INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+  try { db.exec("ALTER TABLE users ADD COLUMN reset_token TEXT")
+  } catch {}
+  try { db.exec("ALTER TABLE users ADD COLUMN reset_token_exp TEXT")
+  } catch {}
+  console.log('[DB] Initialized');
 }
 
 export default db;

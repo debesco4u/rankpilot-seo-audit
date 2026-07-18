@@ -1,84 +1,88 @@
 import React, { useState } from 'react';
-import { User, Tier } from '../types';
+import { Globe, Menu, X, User as UserIcon, LogOut, History, BarChart3, CreditCard } from 'lucide-react';
+import { User } from '../types';
 
-interface Props {
+const LOGO_SRC = "data:image/png;base64,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";
+
+interface NavbarProps {
   user: User | null;
-  onLoginClick: () => void;
+  onLogin: () => void;
+  onSignup: () => void;
   onLogout: () => void;
-  onSelectTier: (tier: Tier) => void;
-  onNavigate?: (page: string) => void;
+  onNavigate: (view: string) => void;
 }
 
-const LOGO_BASE64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5zwKfAAAAclBMVEUAAAAjJi0jJS4jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi0jJi3/rlEUAAAAJXRSTlMA+gXz0BkO5siuSiPbr6F2YFRFLQHY8ezk28W8pZqTi4BwTTcxB3mOjwAAAkBJREFUWMPtl+mSgyAQhAFFwfsW7/v9X3EBNYlJZXez+2OrfP+Mhm6mGab4V/8LHfUEE01f64kJX0ZUYB2V9LBgHCb0aJgNnPnkU7MwJ7S/FJiDS3/e8oJzLvCZjhdx8GmERxfYOsPGXn2csiIOR2FJDwl8b2KmPyBwz4gujPClgWcyJgn9qgzI5CbU/XAfJJz76lEZC09q+PFkiCT6Y3AFYwR4q/FklJfhVtEnXl8VAvEMmhJ0ij+HDCf1/VQGJHGJ/kxOghEJYDEIPlowPzaigLZzOhaBSTHkXcH0jqFgLkiOIcnkbFmtJELLJGd+8SGQF1kbKgCQsJqLuBYIZSAUlASAA2+cNVBbXKqiTJ7DzQiXhFKWGaHGbAYJoB9V6SASEuoJyGAe8O5A2UQAKJscPBBVBkwFKj5xnIdUkCp4dgfQAuB4LDIx7c+BQOM2j0Q0ZbEDEUADNawQSJgcPzxoROYrZAW0EjwIhJsG/VkA+MlE9ADZW/gySOAd3MAGCBhqKBzJ20/ENY0BuasAQH0BfJRYE8sKJ6T6BXKB5F3AhRIJ6Cr4G4fRbwvRcAVKlE+w8sDVdE4N5MgSM0XdDdVOQ7K5vsMU9VoJmWyXN9AH7V+EFmtPa3cYKLhgKb0KLMwlqe3Nzc3Gyi6GZm28i+V2c0p3jZmndA56vbdOALjeDELnzLGH7w5+QaV5L5g9q1sG5H3J7M3vS3HN1mJCiR9Cf6kWfIZVrTJ3s/6D+dN+SdA7Y3TAAAAAElFTkSuQmCC';
-
-export default function Navbar({ user, onLoginClick, onLogout, onSelectTier, onNavigate }: Props) {
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const nav: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', background: '#fff', borderBottom: '1px solid #e5e7eb', position: 'sticky', top: 0, zIndex: 100 };
-  const brand: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' };
-  const globe = (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/>
-      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10A15.3 15.3 0 0 1 12 2z"/>
-    </svg>
-  );
-
-  const linkStyle: React.CSSProperties = { background: 'none', border: 'none', fontSize: 14, fontWeight: 500, color: '#374151', cursor: 'pointer', padding: '6px 12px' };
-  const greenBtn: React.CSSProperties = { padding: '8px 20px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' };
-  const hamburger: React.CSSProperties = { display: 'none', background: 'none', border: 'none', fontSize: 24, cursor: 'pointer' };
+export const Navbar: React.FC<NavbarProps> = ({ user, onLogin, onSignup, onLogout, onNavigate }) => {
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <nav style={nav}>
-      <div style={brand} onClick={() => onNavigate?.('home')}>
-        {globe}
-        <span style={{ fontWeight: 700, fontSize: 18, color: '#111' }}>SEO Audit Tool</span>
-      </div>
+    <nav className="bg-white border-b border-base-300 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <button onClick={() => onNavigate('landing')} className="flex items-center gap-2 hover:opacity-80">
+            <Globe size={24} className="text-primary" />
+            <span className="font-bold text-lg text-base-content">SEO Audit Tool</span>
+          </button>
 
-      {/* Desktop menu */}
-      <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        <button style={linkStyle} onClick={() => onNavigate?.('home')}>Home</button>
-        <button style={linkStyle} onClick={() => {
-          const el = document.getElementById('pricing');
-          el ? el.scrollIntoView({ behavior: 'smooth' }) : onNavigate?.('home');
-        }}>Pricing</button>
-        {user && <button style={linkStyle} onClick={() => onNavigate?.('dashboard')}>Dashboard</button>}
-        {user && <button style={linkStyle} onClick={() => onNavigate?.('account')}>Account</button>}
-        {user ? (
-          <button style={greenBtn} onClick={onLogout}>Sign Out</button>
-        ) : (
-          <button style={greenBtn} onClick={onLoginClick}>Sign In</button>
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-4">
+            <button onClick={() => onNavigate('pricing')} className="btn btn-ghost btn-sm">Pricing</button>
+            {user ? (
+              <>
+                <button onClick={() => onNavigate('audit')} className="btn btn-ghost btn-sm">
+                  <BarChart3 size={16} /> Audit
+                </button>
+                <button onClick={() => onNavigate('history')} className="btn btn-ghost btn-sm">
+                  <History size={16} /> History
+                </button>
+                <div className="dropdown dropdown-end">
+                  <label tabIndex={0} className="btn btn-ghost btn-sm btn-circle">
+                    <UserIcon size={20} />
+                  </label>
+                  <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 border">
+                    <li className="menu-title"><span>{user.name}</span></li>
+                    <li className="menu-title"><span className="text-xs opacity-60">{user.plan.toUpperCase()} plan</span></li>
+                    <li><button onClick={() => onNavigate('account')}><CreditCard size={14} /> Account</button></li>
+                    <li><button onClick={() => onNavigate('history')}><History size={14} /> History</button></li>
+                    <li><button onClick={onLogout} className="text-error"><LogOut size={14} /> Logout</button></li>
+                  </ul>
+                </div>
+              </>
+            ) : (
+              <>
+                <button onClick={onLogin} className="btn btn-ghost btn-sm">Log In</button>
+                <button onClick={onSignup} className="btn btn-primary btn-sm text-white">Sign Up</button>
+              </>
+            )}
+          </div>
+
+          {/* Mobile Toggle */}
+          <button className="md:hidden btn btn-ghost btn-sm" onClick={() => setMobileOpen(!mobileOpen)}>
+            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        {mobileOpen && (
+          <div className="md:hidden pb-4 space-y-2">
+            <button onClick={() => { onNavigate('pricing'); setMobileOpen(false); }} className="btn btn-ghost btn-sm w-full justify-start">Pricing</button>
+            {user ? (
+              <>
+                <button onClick={() => { onNavigate('audit'); setMobileOpen(false); }} className="btn btn-ghost btn-sm w-full justify-start">Audit</button>
+                <button onClick={() => { onNavigate('history'); setMobileOpen(false); }} className="btn btn-ghost btn-sm w-full justify-start">History</button>
+                <button onClick={() => { onNavigate('account'); setMobileOpen(false); }} className="btn btn-ghost btn-sm w-full justify-start">Account</button>
+                <button onClick={() => { onLogout(); setMobileOpen(false); }} className="btn btn-ghost btn-sm w-full justify-start text-error">Logout</button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => { onLogin(); setMobileOpen(false); }} className="btn btn-ghost btn-sm w-full justify-start">Log In</button>
+                <button onClick={() => { onSignup(); setMobileOpen(false); }} className="btn btn-primary btn-sm w-full text-white">Sign Up</button>
+              </>
+            )}
+          </div>
         )}
       </div>
-
-      {/* Mobile hamburger */}
-      <button className="nav-hamburger" style={hamburger} onClick={() => setMenuOpen(!menuOpen)}>
-        {menuOpen ? '✕' : '☰'}
-      </button>
-
-      {/* Mobile dropdown */}
-      {menuOpen && (
-        <div className="nav-mobile-menu" style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '12px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <button style={linkStyle} onClick={() => { onNavigate?.('home'); setMenuOpen(false); }}>Home</button>
-          <button style={linkStyle} onClick={() => { setMenuOpen(false); const el = document.getElementById('pricing'); el ? el.scrollIntoView({ behavior: 'smooth' }) : onNavigate?.('home'); }}>Pricing</button>
-          {user && <button style={linkStyle} onClick={() => { onNavigate?.('dashboard'); setMenuOpen(false); }}>Dashboard</button>}
-          {user && <button style={linkStyle} onClick={() => { onNavigate?.('account'); setMenuOpen(false); }}>Account</button>}
-          {user ? (
-            <button style={greenBtn} onClick={() => { onLogout(); setMenuOpen(false); }}>Sign Out</button>
-          ) : (
-            <button style={greenBtn} onClick={() => { onLoginClick(); setMenuOpen(false); }}>Sign In</button>
-          )}
-        </div>
-      )}
-
-      <style>{`
-        @media (max-width: 768px) {
-          .nav-desktop { display: none !important; }
-          .nav-hamburger { display: block !important; }
-        }
-        @media (min-width: 769px) {
-          .nav-mobile-menu { display: none !important; }
-        }
-      `}</style>
     </nav>
   );
-}
+};

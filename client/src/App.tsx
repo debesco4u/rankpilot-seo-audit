@@ -1,77 +1,107 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Landing from './components/Landing';
-import Dashboard from './components/Dashboard';
-import AccountPage from './components/AccountPage';
-import AuthModal from './components/AuthModal';
-import PaymentModal from './components/PaymentModal';
-import Footer from './components/Footer';
-import type { User, Tier } from './types';
+import { User, AuditResult } from './types';
+import { Navbar } from './components/Navbar';
+import { Footer } from './components/Footer';
+import { Landing } from './components/Landing';
+import { AuthModal } from './components/AuthModal';
+import { Dashboard } from './components/Dashboard';
+import { AuditPage } from './components/AuditPage';
+import { AuditHistory } from './components/AuditHistory';
+import { PricingCards } from './components/PricingCards';
+import { AccountPage } from './components/AccountPage';
+import { ResetPassword } from './components/ResetPassword';
+import './styles.css';
 
-export default function App() {
+const App: React.FC = () => {
+  const [view, setView] = useState('landing');
   const [user, setUser] = useState<User | null>(null);
   const [showAuth, setShowAuth] = useState(false);
-  const [payTier, setPayTier] = useState<Tier | null>(null);
-  const navigate = useNavigate();
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const isResetPage = window.location.pathname === '/reset-password';
 
   useEffect(() => {
-    const token = localStorage.getItem('rp_token');
+    const token = localStorage.getItem('seo_token');
     if (token) {
       fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
-        .then(r => r.ok ? r.json() : Promise.reject())
-        .then(u => setUser(u))
-        .catch(() => localStorage.removeItem('rp_token'));
+        .then(r => r.json())
+        .then(d => { if (d.user) setUser(d.user); else handleLogout(); })
+        .catch(() => handleLogout());
     }
   }, []);
 
-  const handleAuth = (u: User, token: string) => {
-    setUser(u);
-    localStorage.setItem('rp_token', token);
-    setShowAuth(false);
-    navigate('/dashboard');
-  };
-
   const handleLogout = () => {
     setUser(null);
-    localStorage.removeItem('rp_token');
-    navigate('/');
+    localStorage.removeItem('seo_token');
+    setView('landing');
   };
 
-  const handleSelectTier = (tier: Tier) => {
-    if (!user) { setShowAuth(true); return; }
-    if (tier === 'free') return;
-    setPayTier(tier);
+  const handleLogin = (u: User) => {
+    setUser(u);
+    setShowAuth(false);
+    setView('dashboard');
   };
 
-  const handlePaymentSuccess = () => {
-    setPayTier(null);
-    // Refresh user
-    const token = localStorage.getItem('rp_token');
-    if (token) {
-      fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
-        .then(r => r.ok ? r.json() : Promise.reject())
-        .then(u => setUser(u))
-        .catch(() => {});
+  const handleAnalyseClick = () => {
+    if (!user) {
+      setAuthMode('login');
+      setShowAuth(true);
+    } else {
+      setView('audit');
     }
   };
 
-  const showBranding = user?.tier !== 'whitelabel';
+  const handleSignup = () => {
+    setAuthMode('signup');
+    setShowAuth(true);
+  };
+
+  const handleAuditResult = (result: AuditResult) => {
+    setAuditResult(result);
+    setView('dashboard');
+  };
+
+  if (isResetPage) return <ResetPassword />;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'Inter, sans-serif' }}>
-      <Navbar user={user} onLoginClick={() => setShowAuth(true)} onLogout={handleLogout} onSelectTier={handleSelectTier} onNavigate={(p) => p === "home" ? navigate("/") : p === "dashboard" ? navigate("/dashboard") : p === "account" ? navigate("/account") : null} />
-      <div style={{ flex: 1 }}>
-        <Routes>
-          <Route path="/" element={<Landing user={user} onLoginClick={() => setShowAuth(true)} onSelectTier={handleSelectTier} />} />
-          <Route path="/dashboard" element={user ? <Dashboard user={user} /> : <Landing user={user} onLoginClick={() => setShowAuth(true)} onSelectTier={handleSelectTier} />} />
-          <Route path="/audit" element={user ? <Dashboard user={user} /> : <Landing user={user} onLoginClick={() => setShowAuth(true)} onSelectTier={handleSelectTier} showLoginPrompt={true} />} />
-          <Route path="/account" element={user ? <AccountPage user={user} onSelectTier={handleSelectTier} /> : <Landing user={user} onLoginClick={() => setShowAuth(true)} onSelectTier={handleSelectTier} />} />
-        </Routes>
-      </div>
-      <Footer showBranding={showBranding} />
-      {showAuth && <AuthModal onClose={() => setShowAuth(false)} onAuth={handleAuth} />}
-      {payTier && <PaymentModal tier={payTier} onClose={() => setPayTier(null)} onSuccess={handlePaymentSuccess} />}
+    <div className="min-h-screen flex flex-col">
+      <Navbar
+        user={user}
+        onLogin={() => { setAuthMode('login'); setShowAuth(true); }}
+        onSignup={handleSignup}
+        onLogout={handleLogout}
+        onNavigate={setView}
+      />
+
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white text-sm font-medium ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+          {notification.message}
+        </div>
+      )}
+
+      <main className="flex-1">
+        {view === 'landing' && <Landing onAnalyse={handleAnalyseClick} onSignup={handleSignup} />}
+        {view === 'dashboard' && user && <Dashboard result={auditResult} user={user} />}
+        {view === 'audit' && user && <AuditPage user={user} onResult={handleAuditResult} onLogin={() => { setAuthMode('login'); setShowAuth(true); }} />}
+        {view === 'history' && user && <AuditHistory token={localStorage.getItem('seo_token') || ''} />}
+        {view === 'pricing' && <PricingCards token={localStorage.getItem('seo_token') || ''} currentPlan={user?.plan || 'free'} onPlanChange={(p: any) => { if (user) setUser({...user, plan: p}); }} />}
+        {view === 'account' && user && <AccountPage token={localStorage.getItem('seo_token') || ''} onLogout={handleLogout} />}
+      </main>
+
+      <Footer />
+
+      {showAuth && (
+        <AuthModal
+          mode={authMode}
+          onClose={() => setShowAuth(false)}
+          onLogin={handleLogin}
+          onToggleMode={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
+        />
+      )}
     </div>
   );
-}
+};
+
+export default App;
