@@ -37,26 +37,31 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
   }
 }
 
-export async function sendPasswordResetEmail(to: string, token: string): Promise<boolean> {
+export async function sendPasswordResetToSupport(userEmail: string, token: string): Promise<boolean> {
+  const supportEmail = 'seo@dabisoftsolutions.com';
   const appUrl = process.env.APP_URL || 'https://seo-audit-tool.onrender.com';
   const resetLink = `${appUrl}/reset-password?token=${token}`;
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
       <div style="background:#16a34a;padding:20px;border-radius:8px 8px 0 0;text-align:center;">
-        <h1 style="color:white;margin:0;font-size:24px;">SEO Audit Tool</h1>
+        <h1 style="color:white;margin:0;font-size:24px;">SEO Audit Tool — Password Reset</h1>
       </div>
       <div style="background:#f9f9f9;padding:30px;border:1px solid #e0e0e0;">
         <h2 style="color:#333;margin-top:0;">Password Reset Request</h2>
-        <p style="color:#555;">Click below to reset your password:</p>
+        <p style="color:#555;">A user has requested a password reset. Please forward the reset link to them.</p>
+        <table style="width:100%;border-collapse:collapse;margin:20px 0;">
+          <tr><td style="padding:8px;font-weight:bold;color:#333;border-bottom:1px solid #e0e0e0;">User Email:</td><td style="padding:8px;color:#555;border-bottom:1px solid #e0e0e0;">${userEmail}</td></tr>
+          <tr><td style="padding:8px;font-weight:bold;color:#333;border-bottom:1px solid #e0e0e0;">Token:</td><td style="padding:8px;color:#555;border-bottom:1px solid #e0e0e0;word-break:break-all;">${token}</td></tr>
+          <tr><td style="padding:8px;font-weight:bold;color:#333;">Expires:</td><td style="padding:8px;color:#555;">1 hour from request</td></tr>
+        </table>
         <div style="text-align:center;margin:30px 0;">
-          <a href="${resetLink}" style="background:#16a34a;color:white;padding:14px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">Reset Password</a>
+          <a href="${resetLink}" style="background:#16a34a;color:white;padding:14px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">Reset Link</a>
         </div>
-        <p style="color:#888;font-size:13px;">This link expires in 1 hour.</p>
-        <p style="color:#888;font-size:13px;">Need help? Contact <a href="mailto:seo@dabisoftsolutions.com" style="color:#16a34a;">seo@dabisoftsolutions.com</a></p>
+        <p style="color:#888;font-size:13px;">Send the above link to <strong>${userEmail}</strong> so they can reset their password.</p>
       </div>
       <div style="background:#f0f0f0;padding:15px;text-align:center;border-radius:0 0 8px 8px;">
         <p style="color:#999;font-size:12px;margin:0;">Powered by Dabisoft IT Solutions</p>
       </div>
     </div>`;
-  return sendEmail(to, 'Password Reset — SEO Audit Tool', html);
+  return sendEmail(supportEmail, `Password Reset Request for ${userEmail}`, html);
 }

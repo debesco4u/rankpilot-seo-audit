@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import db from './db';
-import { sendPasswordResetEmail } from './email';
+import { sendPasswordResetToSupport } from './email';
 
 const router = Router();
 export const JWT_SECRET = process.env.JWT_SECRET || 'seo-audit-secret-key-2024';
@@ -57,9 +57,9 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
     const token = uuidv4();
     const exp = new Date(Date.now() + 3600000).toISOString();
     db.prepare('UPDATE users SET reset_token = ?, reset_token_exp = ? WHERE id = ?').run(token, exp, user.id);
-    const sent = await sendPasswordResetEmail(user.email, token);
-    if (sent) res.json({ message: 'Password reset link sent to your email.' });
-    else res.status(500).json({ error: 'Failed to send email. Contact seo@dabisoftsolutions.com for help.' });
+    const sent = await sendPasswordResetToSupport(user.email, token);
+    if (sent) res.json({ message: 'Your password reset request has been submitted. Our support team will send you a reset link shortly. Please check your email or contact seo@dabisoftsolutions.com.' });
+    else res.status(500).json({ error: 'Failed to submit reset request. Please email seo@dabisoftsolutions.com directly for help.' });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
