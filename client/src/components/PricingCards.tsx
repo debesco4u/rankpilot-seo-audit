@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PAYPAL_EMAIL } from '../types';
+import { PAYPAL_EMAIL, User } from '../types';
 
 interface Props {
   token: string;
   currentPlan: string;
+  user: User | null;
   onPlanChange: (plan: string) => void;
+  onSignup: () => void;
 }
 
 const plans = [
@@ -38,14 +40,13 @@ const plans = [
   },
 ];
 
-export const PricingCards: React.FC<Props> = ({ token, currentPlan, onPlanChange }) => {
+export const PricingCards: React.FC<Props> = ({ token, currentPlan, user, onPlanChange, onSignup }) => {
   const [processing, setProcessing] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [paypalWindow, setPaypalWindow] = useState<Window | null>(null);
-  const formRef = useRef<HTMLFormElement>(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
-  // Check if PayPal window was closed (user came back)
   useEffect(() => {
     if (!paypalWindow || !showConfirm) return;
     const interval = setInterval(() => {
@@ -59,11 +60,17 @@ export const PricingCards: React.FC<Props> = ({ token, currentPlan, onPlanChange
 
   const handleUpgrade = (planId: string) => {
     if (planId === 'free' || planId === currentPlan) return;
+
+    // Gate: must be logged in
+    if (!user) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
     const plan = plans.find(p => p.id === planId);
     if (!plan) return;
     setProcessing(planId);
 
-    // Build PayPal URL and open in new tab
     const returnUrl = `${window.location.origin}?payment=success&plan=${planId}`;
     const cancelUrl = `${window.location.origin}?payment=cancelled`;
     const params = new URLSearchParams({
@@ -114,14 +121,12 @@ export const PricingCards: React.FC<Props> = ({ token, currentPlan, onPlanChange
     }
   };
 
-  // Check URL params for PayPal return
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const payment = params.get('payment');
     const plan = params.get('plan');
     if (payment === 'success' && plan) {
       setShowConfirm(plan);
-      // Clean URL
       window.history.replaceState({}, '', window.location.pathname);
     }
     if (payment === 'cancelled') {
@@ -133,6 +138,36 @@ export const PricingCards: React.FC<Props> = ({ token, currentPlan, onPlanChange
     <div className="py-8 px-4">
       <h2 className="text-2xl font-bold text-center mb-2">Choose Your Plan</h2>
       <p className="text-center text-base-content/60 mb-8">Unlock advanced SEO features to boost your rankings</p>
+
+      {/* Login prompt modal */}
+      {showLoginPrompt && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-base-100 rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+            <div className="text-5xl mb-4">🔒</div>
+            <h3 className="text-lg font-bold mb-2">Account Required</h3>
+            <p className="text-base-content/70 mb-6">
+              You need to create an account or sign in before upgrading to a paid plan.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setShowLoginPrompt(false)}
+                className="btn btn-ghost btn-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowLoginPrompt(false);
+                  onSignup();
+                }}
+                className="btn btn-primary btn-sm text-white"
+              >
+                Create Account / Sign In
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {plans.map(plan => (

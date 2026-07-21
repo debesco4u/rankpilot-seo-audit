@@ -86,7 +86,7 @@ const App: React.FC = () => {
         {view === 'dashboard' && user && <Dashboard result={auditResult} user={user} />}
         {view === 'audit' && user && <AuditPage user={user} onResult={handleAuditResult} onLogin={() => { setAuthMode('login'); setShowAuth(true); }} />}
         {view === 'history' && user && <AuditHistory token={localStorage.getItem('seo_token') || ''} />}
-        {view === 'pricing' && <PricingCards token={localStorage.getItem('seo_token') || ''} currentPlan={user?.plan || 'free'} onPlanChange={(p: any) => { if (user) setUser({...user, plan: p}); }} />}
+        {view === 'pricing' && <PricingCards token={localStorage.getItem('seo_token') || ''} currentPlan={user?.plan || 'free'} user={user} onPlanChange={(p: any) => { if (user) setUser({...user, plan: p}); }} onSignup={handleSignup} />}
         {view === 'account' && user && <AccountPage token={localStorage.getItem('seo_token') || ''} onLogout={handleLogout} />}
       </main>
 
