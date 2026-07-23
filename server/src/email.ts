@@ -37,7 +37,7 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
     });
 
     if (res.ok) {
-      const data = await res.json();
+      const data = await res.json() as { id?: string };
       console.log(`[EMAIL] ✅ Sent to ${to}: ${data.id}`);
       return true;
     } else {
