@@ -94,7 +94,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, onLogin, on
           )}
 
           <button type="submit" className="btn btn-primary btn-sm w-full text-white" disabled={loading}>
-            {loading ? <Loader2 size={16} className="animate-spin" /> : showForgot ? 'Submit Reset Request' : mode === 'login' ? 'Log In' : 'Sign Up'}
+            {loading ? <Loader2 size={16} className="animate-spin" /> : showForgot ? 'Send Reset Link' : mode === 'login' ? 'Log In' : 'Sign Up'}
           </button>
         </form>
 
