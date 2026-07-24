@@ -20,7 +20,13 @@ const App: React.FC = () => {
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  const isResetPage = window.location.pathname === '/reset-password';
+  // Detect reset-password page — path match OR token param with reset path hint
+  const path = window.location.pathname.replace(/\/+$/, '').toLowerCase();
+  const params = new URLSearchParams(window.location.search);
+  const hasResetToken = params.has('token');
+  const isResetPage = path === '/reset-password' || (path === '' && hasResetToken);
+  
+  console.log('[APP] Route:', { path, hasResetToken, isResetPage });
 
   useEffect(() => {
     const token = localStorage.getItem('seo_token');
