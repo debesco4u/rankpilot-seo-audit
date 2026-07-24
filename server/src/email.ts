@@ -52,7 +52,7 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
 }
 
 export async function sendPasswordResetToUser(userEmail: string, token: string): Promise<boolean> {
-  const appUrl = process.env.APP_URL || 'https://seo-audit-tool.onrender.com';
+  const appUrl = process.env.APP_URL || 'https://rankpilot-seo-audit.onrender.com';
   const resetLink = `${appUrl}/reset-password?token=${token}`;
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
